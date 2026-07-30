@@ -261,3 +261,17 @@ Superb AI 멘토링(`docs/Superb_AI_공모전_멘토링_QnA.md`)에서 "화재 �
 대신 얼굴·복장을 전혀 안 쓰면서도 도움이 되는 방법으로 "박스 크기·비율 유사도"를 보조 기준으로 추가하기로 하고 구현했다. 순위 결정 시 IoU(주 기준, 가중치 0.8)와 박스 크기 유사도(보조 기준, 가중치 0.2, `size_similarity_weight`)를 함께 반영하도록 `_greedy_match`를 수정 — 후보로 남는 조건(IoU 임계값)은 그대로 두고, 여러 후보 중 어느 것을 먼저 확정할지 정하는 순위에만 크기 정보를 더했다. 카메라 거리가 다른 두 사람은 화면상 박스 크기도 달라진다는 점을 이용한 것으로, 신원 정보를 전혀 쓰지 않아 원칙에 위배되지 않는다. IoU만 보면 더 큰 박스가 근소하게 앞서지만 크기가 다르면 오답이 되는 케이스를 재현하는 테스트(`test_size_similarity_breaks_ties_toward_matching_scale`)를 추가했고, 백엔드 테스트 스위트 44개 전부(신규 1개 포함) 통과.
 
 칼만 필터(더 정교한 위치 예측)와 헝가리안 알고리즘(전역 최적 매칭)도 후보로 검토했으나, 전자는 이번 문제엔 효과가 제한적이고 후자는 사람 수가 적은 우리 촬영 계획(2~4명)에서 이득이 작은 데다 `scipy` 의존성을 새로 추가해야 해서 우선순위를 낮췄다 — 나중에 자체 촬영 영상으로 실제 ID Switch 빈도를 확인한 뒤 필요하면 추가하기로 함.
+
+## 21. PPE 탐지 모델(detector.py) 실제 연결 — 스텁 해소
+
+PPE v2(스모크 증강) 학습이 100/100 epoch로 완료됐다(val mAP 0.759, mAP@50 0.945, precision 0.969, recall 0.943 — v1 baseline의 mAP 0.493보다 확실히 개선). 그동안 `NotImplementedError`만 던지던 `backend/app/inference/detector.py`를 이 모델에 연결했다.
+
+**배포가 왜 필요했나**: `fire_detector.py`는 BDAI가 상시 띄워둔 공유 엔드포인트(ZERO 제로샷 모델)를 프롬프트로 호출하는 방식이라 별도 배포가 필요 없었지만, PPE 모델은 우리가 직접 학습시킨 커스텀 체크포인트라 추론을 받으려면 BDAI에 배포(deployment, 실제 GPU 인스턴스를 띄우는 클라우드 리소스)를 먼저 만들어야 했다. 계정에 비용이 발생할 수 있는 작업이라 진행 전에 사용자에게 확인받았고("배포 진행" 선택), `c.deployments.create(model_id=...)`로 배포(`ml.g4dn.xlarge`)를 만들어 준비 완료(`ready`) 상태까지 확인한 뒤 실제 샘플 이미지로 호출 테스트까지 마쳤다.
+
+**구현**:
+- `backend/app/core/config.py`에 `ppe_deployment_id` 설정 추가, `.env`/`.env.example`에 `PPE_DEPLOYMENT_ID` 채워둠.
+- `backend/app/inference/detector.py`: `fire_detector.py`와 같은 패턴(BGR 프레임 → JPEG → base64 → API 호출)으로 `client.deployments.predict()`를 호출하도록 구현. 응답의 `class_name`(`"person"`/`"helmet"`/`"vest"`)을 `ObjectClass`로 매핑 — 학습 스키마에 같이 등록됐지만 실제 학습 데이터가 없던 속성 클래스(상의 색상 등, support=0)는 매핑 테이블에 없으므로 자동으로 무시된다.
+- `backend/tests/test_detector.py` 신규: `get_bdai_client`/`get_settings`를 가짜 객체로 monkeypatch해서 매핑 로직과 배포 ID 미설정 시 `RuntimeError`를 검증(2개). 실제 API를 호출하는 통합 테스트는 아님(호출 비용·네트워크 의존 때문에 유닛 테스트만 작성) — 별도로 실제 배포에 샘플 이미지를 넣어 21건 정상 탐지되는 것도 수동으로 확인함.
+- 백엔드 테스트 스위트 46개 전부 통과(신규 2개 포함).
+
+**아직 남은 것**: `workers.py` API가 여전히 더미 데이터를 반환 중이라, 이 detector와 `byte_track.py`/`app.rules` 규칙 모듈들을 실제 영상 입력과 엔드투엔드로 잇는 작업은 그대로 남아있다. 또한 배포는 살아있는 클라우드 리소스라 계속 켜두면 비용이 쌓일 수 있어, 당분간 안 쓸 때는 `c.deployments.stop(deployment_id)`로 멈추는 걸 고려할 것.
