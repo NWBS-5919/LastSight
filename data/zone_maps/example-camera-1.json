@@ -1,0 +1,16 @@
+{
+  "camera_id": "example-camera-1",
+  "image_width": 800,
+  "image_height": 480,
+  "zones": [
+    { "zone_id": "A", "polygon": [[0, 0], [400, 0], [400, 480], [0, 480]] },
+    { "zone_id": "B", "polygon": [[400, 0], [800, 0], [800, 480], [400, 480]] }
+  ],
+  "exit_lines": [
+    {
+      "exit_id": "출구1",
+      "line": [[780, 0], [780, 480]],
+      "inside_point": [700, 240]
+    }
+  ]
+}

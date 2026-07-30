@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+
+# Conda
+*.conda
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+npm-debug.log*
+
+# Model weights & large artifacts
+*.pt
+*.onnx
+*.pth
+*.engine
+
+# Data (원본 영상·프레임은 용량이 크고 팀 개인 촬영본이라 git 추적 제외 — BDAI 플랫폼이 원본 저장소 역할)
+data/raw/*
+data/frames/*
+data/exports/*
+data/public_datasets/*
+data/zone_maps/images/
+!data/raw/.gitkeep
+!data/frames/.gitkeep
+!data/exports/.gitkeep
+!data/public_datasets/.gitkeep
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Claude Code 런타임 상태 (세션 락 파일 등 — 공유 불필요)
+.claude/

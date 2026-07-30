@@ -1,0 +1,22 @@
+name: lastsight
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - pip
+  - numpy
+  - opencv
+  - pip:
+      - fastapi
+      - uvicorn[standard]
+      - python-multipart
+      - pydantic-settings
+      - python-dotenv
+      - websockets
+      - superb-ai         # BDAI(Superb AI) Python SDK — bdai_pipeline/ 스크립트에서 사용
+      - pytest
+      - httpx             # backend 테스트(TestClient)에서 사용
+      # 아래는 탐지·추적 모델을 확정하면 추가:
+      # - ultralytics      # YOLO 계열 탐지 모델 사용 시
+      # - bytetracker      # ByteTrack 추적 사용 시 (패키지명은 실제 선택한 구현체에 맞춰 교체)

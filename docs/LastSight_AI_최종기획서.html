@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LastSight AI 최종 기획서</title>
+  <style>
+    :root{
+      --bg:#f5f7fb;
+      --paper:#ffffff;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --line:#dfe4ec;
+      --brand:#1f7a5a;
+      --brand-soft:#e8f5ef;
+      --accent:#f59e0b;
+      --danger:#c2413b;
+      --warn:#b7791f;
+      --info:#2563eb;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+      line-height:1.72;
+    }
+    .wrap{max-width:1100px;margin:0 auto;padding:28px 18px 80px}
+    .hero{
+      background:linear-gradient(135deg,#173f35 0%,#1f7a5a 100%);
+      color:#fff;
+      padding:56px 44px;
+      border-radius:24px;
+      box-shadow:0 18px 50px rgba(31,122,90,.22);
+      margin-bottom:28px;
+    }
+    .eyebrow{font-size:14px;font-weight:700;letter-spacing:.08em;opacity:.85}
+    h1{font-size:44px;line-height:1.15;margin:12px 0 18px}
+    .subtitle{font-size:24px;font-weight:700;margin:0 0 18px}
+    .tagline{
+      margin:0;
+      padding:16px 18px;
+      border-left:4px solid #c6f6d5;
+      background:rgba(255,255,255,.12);
+      border-radius:10px;
+      font-size:18px;
+    }
+    .toc,.section{
+      background:var(--paper);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:30px 32px;
+      margin:0 0 22px;
+      box-shadow:0 8px 28px rgba(17,24,39,.05);
+    }
+    .toc h2,.section h2{
+      margin:0 0 18px;
+      font-size:28px;
+      line-height:1.25;
+    }
+    .section h3{
+      margin:30px 0 12px;
+      font-size:21px;
+      color:#173f35;
+    }
+    .section h4{margin:22px 0 8px;font-size:17px}
+    .toc-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+      gap:10px 18px;
+    }
+    .toc a{
+      display:block;
+      color:#265f50;
+      text-decoration:none;
+      padding:8px 10px;
+      border-radius:9px;
+    }
+    .toc a:hover{background:var(--brand-soft)}
+    .lead{
+      font-size:18px;
+      background:var(--brand-soft);
+      border-left:5px solid var(--brand);
+      padding:18px 20px;
+      border-radius:10px;
+    }
+    .callout{
+      padding:16px 18px;
+      border-radius:12px;
+      background:#fff8e7;
+      border:1px solid #f1d38b;
+      margin:16px 0;
+    }
+    .callout.safe{
+      background:#edf7f2;
+      border-color:#b9ddcd;
+    }
+    .callout.danger{
+      background:#fff1f0;
+      border-color:#efb4af;
+    }
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      margin:14px 0 24px;
+      font-size:15px;
+      overflow:hidden;
+      border:1px solid var(--line);
+      border-radius:12px;
+    }
+    th,td{
+      padding:12px 14px;
+      vertical-align:top;
+      border-right:1px solid var(--line);
+      border-bottom:1px solid var(--line);
+    }
+    th:last-child,td:last-child{border-right:none}
+    tr:last-child td{border-bottom:none}
+    th{
+      text-align:left;
+      background:#f1f5f9;
+      color:#233044;
+      font-weight:800;
+    }
+    ul,ol{padding-left:22px}
+    li{margin:5px 0}
+    code{
+      background:#eef2f7;
+      padding:2px 6px;
+      border-radius:6px;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    }
+    .flow{
+      background:#111827;
+      color:#e5e7eb;
+      padding:20px;
+      border-radius:14px;
+      white-space:pre-wrap;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      font-size:14px;
+    }
+    .badge{
+      display:inline-block;
+      border-radius:999px;
+      padding:4px 10px;
+      font-size:13px;
+      font-weight:700;
+      margin-right:6px;
+    }
+    .green{background:#dcfce7;color:#166534}
+    .orange{background:#ffedd5;color:#9a3412}
+    .red{background:#fee2e2;color:#991b1b}
+    .gray{background:#e5e7eb;color:#374151}
+    .footnote{
+      color:var(--muted);
+      font-size:13px;
+      margin-top:34px;
+      padding-top:18px;
+      border-top:1px solid var(--line);
+    }
+    .top-link{
+      display:inline-block;
+      color:var(--brand);
+      text-decoration:none;
+      font-size:13px;
+      margin-top:10px;
+    }
+    @media (max-width:720px){
+      .hero{padding:36px 24px;border-radius:18px}
+      h1{font-size:34px}
+      .subtitle{font-size:20px}
+      .toc,.section{padding:24px 18px}
+      table{font-size:14px}
+      th,td{padding:10px}
+    }
+    @media print{
+      body{background:#fff}
+      .wrap{max-width:none;padding:0}
+      .hero,.toc,.section{box-shadow:none;border-radius:0}
+      .toc{display:none}
+      .section{break-inside:avoid-page}
+      a{color:inherit;text-decoration:none}
+    }
+  </style>
+</head>
+<body>
+<div class="wrap" id="top">
+
+  <header class="hero">
+    <div class="eyebrow">산업안전·물류 트랙 · Vision AI</div>
+    <h1>LastSight AI</h1>
+    <p class="subtitle">Vision AI 기반 공장 화재 대피 이행 확인 및 미확인 작업자 구조 브리핑 시스템</p>
+    <p class="tagline">화재를 발견하는 AI가 아니라, 화재경보 이후 출구 통과가 확인되지 않은 작업자를 어디에서 마지막으로 관측했는지 알려주는 AI</p>
+  </header>
+
+  <nav class="toc">
+    <h2>목차</h2>
+    <div class="toc-grid">
+      <a href="#overview">0. 프로젝트 개요</a>
+      <a href="#problem">1. 문제 정의</a>
+      <a href="#background">2. 제안 배경</a>
+      <a href="#service">3. 서비스 정의</a>
+      <a href="#compare">4. 기존 시스템 비교</a>
+      <a href="#competitive">5. 주제 경쟁력</a>
+      <a href="#scope">6. 서비스 범위</a>
+      <a href="#flow">7. 작동 흐름</a>
+      <a href="#architecture">8. 모델 및 시스템 구성</a>
+      <a href="#platform">9. Superb AI 활용 계획</a>
+      <a href="#data">10. 데이터 구축 계획</a>
+      <a href="#labels">11. 클래스 정의서</a>
+      <a href="#experiments">12. 모델 실험 계획</a>
+      <a href="#metrics">13. 성능평가 지표</a>
+      <a href="#mvp">14. MVP 범위</a>
+      <a href="#demo">15. 데모 시나리오</a>
+      <a href="#dashboard">16. 대시보드 구성</a>
+      <a href="#risks">17. 예상 문제와 대응</a>
+      <a href="#privacy">18. 개인정보 보호</a>
+      <a href="#limits">19. 서비스 한계</a>
+      <a href="#effects">20. 기대 효과</a>
+      <a href="#roadmap">21. 향후 확장</a>
+      <a href="#submission">22. 제출 보고서 구조</a>
+      <a href="#presentation">23. 발표 구성</a>
+      <a href="#faq">24. 예상 질문</a>
+      <a href="#summary">25. 최종 요약</a>
+    </div>
+  </nav>
+
+  <section class="section" id="overview">
+    <h2>0. 프로젝트 개요</h2>
+    <table>
+      <tr><th>구분</th><th>내용</th></tr>
+      <tr><td>서비스명</td><td><strong>LastSight AI</strong></td></tr>
+      <tr><td>공모전 트랙</td><td>산업안전·물류</td></tr>
+      <tr><td>주제 유형</td><td>자체 주제</td></tr>
+      <tr><td>핵심 문제</td><td>화재경보 이후 작업자가 실제로 대피했는지와 출구 통과가 확인되지 않은 사람이 마지막으로 어디에서 관측되었는지 신속하게 파악하기 어려운 문제</td></tr>
+      <tr><td>주요 사용자</td><td>공장 안전관리자, 방재실 근무자, 자위소방대, 현장에 도착한 소방대 지휘관</td></tr>
+      <tr><td>핵심 기술</td><td>작업자 탐지, 다중 객체 추적, 가상선 기반 출구 통과 판정, 구역 판정, 보호구·복장 속성 분류, 마지막 관측 프레임 선택</td></tr>
+      <tr><td>주요 출력</td><td>대피 확인 인원, 내부 관측 인원, 출구 미확인 인원, 마지막 관측 구역·시각·이미지, 안전모·조끼·상의 색상</td></tr>
+      <tr><td>서비스 형태</td><td>기존 CCTV 영상에 추가되는 화재 대응 보조 웹 서비스</td></tr>
+      <tr><td>Superb AI 활용</td><td>데이터 관리, 라벨링, 품질 검수, 모델 학습 또는 학습 데이터 구축, 성능 비교 및 오류 데이터 재수집</td></tr>
+      <tr><td>핵심 차별점</td><td>화재·연기 감지에 그치지 않고 <strong>경보 이후의 대피 이행과 구조정보 공백</strong>을 해결</td></tr>
+      <tr><td>안전 원칙</td><td>카메라에서 사라졌다는 이유만으로 대피 완료로 처리하지 않음</td></tr>
+      <tr><td>개인정보 원칙</td><td>얼굴인식, 사번 매칭, 국적·인종·성별·나이·체형 추정을 하지 않음</td></tr>
+    </table>
+  </section>
+
+  <section class="section" id="problem">
+    <h2>1. 한 문장 문제 정의</h2>
+    <p class="lead">공장의 기존 화재경보설비는 화재 발생과 대피 명령을 전달하지만, 경보 이후 CCTV 관측 범위 내 작업자가 실제로 출구를 통과했는지와 출구 통과가 확인되지 않은 사람이 마지막으로 어느 구역에서 관측되었는지를 자동으로 정리하기 어렵다.</p>
+  </section>
+
+  <section class="section" id="background">
+    <h2>2. 제안 배경</h2>
+    <h3>2-1. 기존 화재 대응의 구조</h3>
+    <div class="flow">화재감지기 작동
+→ 경종·시각경보·비상방송
+→ 작업자 대피
+→ 집결지에서 수동 인원 확인
+→ 미확인자가 있으면 관리자·동료에게 질문
+→ CCTV를 되돌려 마지막 위치 확인
+→ 소방대에 예상 인원과 위치를 구두로 전달</div>
+    <p>현재의 공백은 <strong>“화재가 발생했다는 사실을 알리는 것”과 “실제로 누가 대피했는지 확인하는 것” 사이</strong>에 있다.</p>
+
+    <h3>2-2. 기존 방식의 한계</h3>
+    <table>
+      <tr><th>현재 방식</th><th>현장 한계</th></tr>
+      <tr><td>출근명부·출입기록으로 재실자 확인</td><td>이미 퇴근하거나 일시 외출한 사람이 포함될 수 있음</td></tr>
+      <tr><td>사원 명부 중심 집계</td><td>협력업체·방문자·파견·일용직 근로자가 누락될 수 있음</td></tr>
+      <tr><td>집결지에서 이름을 부르며 확인</td><td>소음, 혼란, 부상, 언어 차이로 확인이 지연될 수 있음</td></tr>
+      <tr><td>동료의 기억에 의존</td><td>긴급상황에서 마지막 위치 기억이 부정확할 수 있음</td></tr>
+      <tr><td>관리자가 CCTV를 직접 재생</td><td>여러 카메라의 과거 영상을 짧은 시간 안에 검토하기 어려움</td></tr>
+      <tr><td>카메라에서 사람이 사라지면 판단 불가</td><td>대피, 가림, 사각지대 이동을 구분하기 어려움</td></tr>
+      <tr><td>이름만 구조대에 전달</td><td>현장 구조대가 해당 작업자의 모습을 모를 수 있음</td></tr>
+      <tr><td>현재 CCTV 영상만 확인</td><td>연기·정전·카메라 장애 이후에는 작업자를 확인하기 어려움</td></tr>
+    </table>
+  </section>
+
+  <section class="section" id="service">
+    <h2>3. 서비스 정의</h2>
+    <h3>3-1. 정식 주제명</h3>
+    <p class="lead">Vision AI 기반 공장 화재 대피 이행 확인 및 미확인 작업자 마지막 관측 정보 제공 시스템</p>
+
+    <h3>3-2. 서비스 소개</h3>
+    <p>LastSight AI는 기존 CCTV 영상을 활용해 화재경보 전후 작업자의 이동을 추적하고, 출구 가상선 통과 여부에 따라 상태를 분류하는 화재 대응 보조 서비스이다.</p>
+    <table>
+      <tr><th>상태</th><th>정의</th></tr>
+      <tr><td><span class="badge green">대피 확인</span></td><td>작업자가 출구선을 내부에서 외부로 통과한 장면이 확인됨</td></tr>
+      <tr><td><span class="badge red">내부 관측</span></td><td>화재경보 이후에도 공장 내부 구역에서 계속 관측됨</td></tr>
+      <tr><td><span class="badge orange">출구 미확인</span></td><td>출구 통과 없이 가림·사각지대·저시야 등으로 추적이 중단됨</td></tr>
+    </table>
+
+    <h3>3-3. 핵심 가치</h3>
+    <p class="callout safe">화재 발생을 다시 탐지하는 것이 아니라, 화재경보 이후 관리자가 여러 CCTV를 직접 되돌려보는 시간을 줄이고 구조에 필요한 정보를 빠르게 정리한다.</p>
+  </section>
+
+  <section class="section" id="compare">
+    <h2>4. 기존 시스템과 LastSight AI 비교</h2>
+    <table>
+      <tr><th>구분</th><th>기존 화재 대응</th><th>LastSight AI</th></tr>
+      <tr><td>화재 발생 알림</td><td>경종·방송·시각경보</td><td>기존 화재신호 활용</td></tr>
+      <tr><td>화재 위치</td><td>수신반에서 경계구역 확인</td><td>대시보드 평면도에 표시</td></tr>
+      <tr><td>작업자 대피 여부</td><td>집결지에서 수동 확인</td><td>출구 통과 영상으로 대피 이행 확인</td></tr>
+      <tr><td>내부 작업자</td><td>관리자·동료의 기억에 의존</td><td>경보 후 내부 관측 상태 표시</td></tr>
+      <tr><td>추적 실패</td><td>관리자가 CCTV를 직접 재생</td><td>마지막 관측 구역·시각 자동 기록</td></tr>
+      <tr><td>구조대상자 모습</td><td>동료의 구두 설명</td><td>참조 이미지와 제한된 복장 속성 제공</td></tr>
+      <tr><td>외국인 근로자 대응</td><td>다국어 교육·방송</td><td>다국어 대피 안내와 대피 이행 확인을 연결</td></tr>
+      <tr><td>불확실성 처리</td><td>현장 담당자의 판단</td><td>출구 미확인 상태를 별도로 표시</td></tr>
+      <tr><td>소방대 정보 전달</td><td>구두·종이 명부</td><td>구조 브리핑 카드 제공</td></tr>
+    </table>
+  </section>
+
+  <section class="section" id="competitive">
+    <h2>5. 주제의 경쟁력</h2>
+    <h3>5-1. 문제 재정의의 차별성</h3>
+    <p>LastSight AI는 화재·연기 탐지, PPE 감지 같은 단일 기능에 머무르지 않고, 사건 흐름을 다음과 같이 연결한다.</p>
+    <div class="flow">사람 탐지
+→ 임시 ID 추적
+→ 출구 통과 판정
+→ 대피 상태 분류
+→ 마지막 관측 프레임 선택
+→ 구조 브리핑 카드 생성</div>
+
+    <h3>5-2. 공모전 평가와의 연결</h3>
+    <table>
+      <tr><th>평가 관점</th><th>LastSight AI에서 강조할 내용</th></tr>
+      <tr><td>문제 정의</td><td>화재 탐지가 아닌 경보 이후 대피 확인과 구조정보 공백을 문제로 재정의</td></tr>
+      <tr><td>데이터 기획</td><td>정상 상황뿐 아니라 가림, 동일 복장, 집단 대피, 추적 중단, 카메라 장애를 포함</td></tr>
+      <tr><td>클래스 설계</td><td>객체 클래스, 속성 클래스, 이벤트 라벨의 역할을 구분</td></tr>
+      <tr><td>라벨 품질</td><td>포함·제외·애매한 사례 기준을 명확히 정의</td></tr>
+      <tr><td>모델 실험</td><td>가림·원거리·저조도 데이터를 단계적으로 추가하며 성능 변화 기록</td></tr>
+      <tr><td>평가 지표</td><td>mAP뿐 아니라 Recall, ID 유지, 출구 통과 F1, False All-Clear 평가</td></tr>
+      <tr><td>서비스 완성도</td><td>실제 영상 입력부터 구조카드 출력까지 동작하는 웹 데모</td></tr>
+    </table>
+  </section>
+
+  <section class="section" id="scope">
+    <h2>6. 서비스 범위와 안전한 표현</h2>
+    <h3>6-1. 시스템이 판단하는 것</h3>
+    <ul>
+      <li>CCTV 화면에 보이는 사람</li>
+      <li>영상 내 작업자의 임시 추적 ID</li>
+      <li>작업자가 위치한 카메라·구역</li>
+      <li>출구 가상선 통과 여부</li>
+      <li>경보 이후 내부 관측 여부</li>
+      <li>출구 통과 없는 추적 중단</li>
+      <li>마지막 관측 위치·시각</li>
+      <li>제한된 보호구·복장 정보</li>
+    </ul>
+
+    <h3>6-2. 시스템이 판단하지 않는 것</h3>
+    <ul>
+      <li>공장 전체의 정확한 총인원</li>
+      <li>CCTV가 없는 공간의 재실 여부</li>
+      <li>출구 미확인 작업자가 실제로 현재 내부에 남아 있는지</li>
+      <li>얼굴 기반 신원·국적·인종·성별·나이·체형</li>
+      <li>구조대원의 진입 경로</li>
+      <li>AI 단독 전원 대피 완료 선언</li>
+    </ul>
+
+    <div class="callout danger"><strong>핵심 표현 원칙:</strong> “잔류자를 확정한다”가 아니라 “CCTV 관측 범위 내 출구 통과가 확인되지 않은 작업자를 분류한다”고 설명한다.</div>
+  </section>
+
+  <section class="section" id="flow">
+    <h2>7. 전체 서비스 작동 흐름</h2>
+
+    <h3>1단계. 평상시 모니터링</h3>
+    <ul>
+      <li>CCTV 영상에서 작업자를 탐지한다.</li>
+      <li>작업자마다 영상 내 임시 추적 ID를 부여한다.</li>
+      <li>각 카메라를 공장 평면도의 구역과 연결한다.</li>
+      <li>출구 위치에는 가상선을 설정한다.</li>
+      <li>이름·사번·얼굴 정보와 연결하지 않는다.</li>
+    </ul>
+
+    <h3>2단계. 화재신호 입력</h3>
+    <table>
+      <tr><th>입력 항목</th><th>예시</th></tr>
+      <tr><td>화재구역</td><td>B구역 포장실</td></tr>
+      <tr><td>경보 시작시각</td><td>14:03:00</td></tr>
+      <tr><td>사용 불가 통로</td><td>B구역 동측 통로</td></tr>
+      <tr><td>사용 가능 출구</td><td>1번·2번 출구</td></tr>
+      <tr><td>안내 언어</td><td>한국어·영어·베트남어</td></tr>
+    </table>
+
+    <h3>3단계. 다국어·시각 대피 안내</h3>
+    <p>사업장에서 사전에 등록한 주요 언어를 동시에 출력하고, 얼굴을 보고 국적이나 사용할 언어를 추정하지 않는다.</p>
+
+    <h3>4단계. 대피 이동 추적</h3>
+    <ul>
+      <li>출구선을 안쪽에서 바깥쪽으로 통과했는가</li>
+      <li>경보 후 내부 구역에 계속 머무르는가</li>
+      <li>출구 통과 없이 화면에서 사라졌는가</li>
+      <li>출구에 접근했지만 통과하지 않고 되돌아갔는가</li>
+      <li>대피 후 외부에서 내부로 재진입했는가</li>
+    </ul>
+
+    <h3>5단계. 작업자 상태 분류</h3>
+    <table>
+      <tr><th>상태</th><th>판정 기준</th><th>화면 표시</th></tr>
+      <tr><td>대피 확인</td><td>출구선을 내부→외부로 완전히 통과</td><td>초록색</td></tr>
+      <tr><td>내부 관측</td><td>경보 후에도 내부 구역에서 계속 탐지</td><td>빨간색</td></tr>
+      <tr><td>출구 미확인</td><td>출구 통과 없이 추적이 중단</td><td>주황색</td></tr>
+      <tr><td>재진입 경고</td><td>대피 확인 후 외부→내부 재통과</td><td>빨간색 경고</td></tr>
+      <tr><td>카메라 확인 불가</td><td>영상 중단 또는 심한 저시야</td><td>회색 경고</td></tr>
+    </table>
+
+    <h3>6단계. 마지막 관측 정보 저장</h3>
+    <ul>
+      <li>마지막 탐지 프레임</li>
+      <li>마지막 관측 카메라·구역·시각</li>
+      <li>마지막 이동 방향</li>
+      <li>출구 통과 기록 유무</li>
+      <li>추적 중단 원인 추정값</li>
+    </ul>
+
+    <h3>7단계. 참조 프레임 선택</h3>
+    <p>마지막 관측 이미지와 가장 선명한 참조 이미지를 함께 제공한다.</p>
+
+    <h3>8단계. 제한된 인상착의 구조화</h3>
+    <table>
+      <tr><th>항목</th><th>출력 예시</th></tr>
+      <tr><td>안전모</td><td>노란색 안전모</td></tr>
+      <tr><td>안전조끼</td><td>주황색 반사조끼</td></tr>
+      <tr><td>상의</td><td>남색 작업복</td></tr>
+      <tr><td>마지막 위치</td><td>C구역 창고 입구</td></tr>
+      <tr><td>마지막 시각</td><td>14:03:18</td></tr>
+      <tr><td>출구 통과</td><td>미확인</td></tr>
+    </table>
+
+    <h3>9단계. 구조 브리핑 카드 생성</h3>
+    <p class="callout">노란색 안전모와 주황색 안전조끼, 회색 상의를 착용한 작업자입니다. 마지막으로 14시 03분 18초에 C구역 창고 입구에서 서쪽 창고 방향으로 이동하는 모습이 관측되었습니다. 출구 통과 기록은 확인되지 않았습니다.</p>
+
+    <h3>10단계. 관리자 검토 및 전달</h3>
+    <ul>
+      <li>AI가 생성한 구조카드는 관리자가 확인한다.</li>
+      <li>관리자는 상태와 속성 정보를 수정할 수 있다.</li>
+      <li>공모전 MVP에서는 소방기관 시스템으로 자동 전송하지 않는다.</li>
+      <li>현장 안전관리자가 소방대 지휘관에게 화면을 제시한다.</li>
+    </ul>
+  </section>
+
+  <section class="section" id="architecture">
+    <h2>8. AI 모델 및 시스템 구성</h2>
+    <table>
+      <tr><th>구성 요소</th><th>역할</th><th>구현 방식</th><th>Superb AI 활용</th></tr>
+      <tr><td>작업자 탐지 모델</td><td>CCTV에서 사람 탐지</td><td>객체 탐지</td><td>데이터 라벨링·학습·평가</td></tr>
+      <tr><td>안전모·조끼 탐지/분류</td><td>보호구와 색상 분석</td><td>객체 탐지 또는 crop 분류</td><td>라벨링·학습·평가</td></tr>
+      <tr><td>다중 객체 추적</td><td>사람별 임시 ID 유지</td><td>ByteTrack 계열</td><td>모델 결과를 외부 코드에서 결합</td></tr>
+      <tr><td>구역 판정</td><td>사람이 위치한 구역 판단</td><td>카메라별 고정 폴리곤</td><td>외부 규칙</td></tr>
+      <tr><td>출구 통과 판정</td><td>내부→외부 통과 기록</td><td>궤적과 가상선 교차</td><td>외부 규칙</td></tr>
+      <tr><td>상태 규칙 엔진</td><td>대피·내부 관측·미확인 판정</td><td>추적 결과 기반 규칙</td><td>외부 코드</td></tr>
+      <tr><td>프레임 선택</td><td>참조 이미지 선정</td><td>선명도·가림·박스 크기 점수</td><td>외부 코드</td></tr>
+      <tr><td>구조카드 생성</td><td>구조정보 요약</td><td>구조화 데이터 템플릿</td><td>웹 서비스</td></tr>
+    </table>
+  </section>
+
+  <section class="section" id="platform">
+    <h2>9. Superb AI 플랫폼 활용 계획</h2>
+    <h3>Step 1. 데이터 선별</h3>
+    <ul><li>직접 촬영 영상 검토</li><li>프레임 중복 제거</li><li>시나리오별 균형 확인</li><li>외부 데이터 라이선스 확인</li></ul>
+    <h3>Step 2. 데이터 구축 및 라벨링</h3>
+    <ul><li>프로젝트 생성</li><li>클래스 정의</li><li>영상·프레임 업로드</li><li>사람·안전모·조끼 라벨링</li><li>품질 검수와 수정 이력 관리</li></ul>
+    <h3>Step 3. 모델 학습 및 실험</h3>
+    <ul><li>기본 모델 학습</li><li>가림·원거리 데이터 추가</li><li>저조도·연기 증강</li><li>실패 이미지 선별</li><li>오류 데이터 재라벨링·재수집</li></ul>
+    <h3>Step 4. 서비스 구현 및 데모</h3>
+    <ul><li>추론 결과와 ByteTrack 연결</li><li>출구 가상선 통과 판정</li><li>상태 규칙 엔진 구현</li><li>구조카드·대시보드 제작</li><li>실제 영상 기반 시연</li></ul>
+  </section>
+
+  <section class="section" id="data">
+    <h2>10. 데이터 구축 계획</h2>
+    <h3>10-1. 촬영 환경</h3>
+    <table>
+      <tr><th>구성</th><th>내용</th></tr>
+      <tr><td>공간</td><td>강의실·복도·실습실</td></tr>
+      <tr><td>작업구역</td><td>A·B·C 3개 구역</td></tr>
+      <tr><td>출구</td><td>2개</td></tr>
+      <tr><td>카메라</td><td>고정 카메라 2대</td></tr>
+      <tr><td>촬영 인원</td><td>2~4명 역할 교대</td></tr>
+      <tr><td>복장</td><td>안전모, 안전조끼, 서로 다른 색상의 상의</td></tr>
+      <tr><td>연기</td><td>실제 연기 사용 금지, 디지털 합성</td></tr>
+      <tr><td>화재신호</td><td>관리자 버튼으로 모의 입력</td></tr>
+    </table>
+
+    <h3>10-2. 촬영 시나리오</h3>
+    <table>
+      <tr><th>번호</th><th>시나리오</th><th>확인할 기능</th></tr>
+      <tr><td>1</td><td>모든 인원이 정상적으로 출구 통과</td><td>전원 대피 확인</td></tr>
+      <tr><td>2</td><td>한 명이 내부에서 작업을 계속함</td><td>내부 관측</td></tr>
+      <tr><td>3</td><td>한 명이 박스·기둥 뒤로 이동</td><td>출구 미확인</td></tr>
+      <tr><td>4</td><td>여러 명이 동시에 출구 통과</td><td>집단 대피 집계</td></tr>
+      <tr><td>5</td><td>같은 작업복을 입은 두 사람이 교차</td><td>ID 혼동 시험</td></tr>
+      <tr><td>6</td><td>출구선에 접근한 뒤 내부로 돌아감</td><td>오대피 판정 방지</td></tr>
+      <tr><td>7</td><td>대피 후 작업자가 내부로 재진입</td><td>재진입 감지</td></tr>
+      <tr><td>8</td><td>디지털 연기로 시야가 낮아짐</td><td>추적 신뢰도 저하</td></tr>
+      <tr><td>9</td><td>한 카메라 영상이 중간에 끊김</td><td>마지막 관측 유지</td></tr>
+      <tr><td>10</td><td>작업자 일부가 프레임 밖으로 이동</td><td>화면 이탈과 대피 구분</td></tr>
+    </table>
+
+    <h3>10-3. 권장 데이터 규모</h3>
+    <table>
+      <tr><th>데이터</th><th>1차 목표</th></tr>
+      <tr><td>원본 영상</td><td>40~60개</td></tr>
+      <tr><td>영상 길이</td><td>20~45초</td></tr>
+      <tr><td>촬영 시나리오</td><td>10종 이상</td></tr>
+      <tr><td>샘플링 이미지</td><td>2,000~3,000장</td></tr>
+      <tr><td>사람 바운딩박스</td><td>6,000개 이상</td></tr>
+      <tr><td>PPE 라벨</td><td>3,000개 이상</td></tr>
+      <tr><td>테스트 영상</td><td>최소 12개, 가능하면 20개 이상</td></tr>
+    </table>
+  </section>
+
+  <section class="section" id="labels">
+    <h2>11. 클래스 정의서</h2>
+    <h3>11-1. 객체 탐지 클래스</h3>
+    <table>
+      <tr><th>클래스</th><th>정의</th><th>포함 기준</th><th>제외 기준</th></tr>
+      <tr><td><code>person</code></td><td>CCTV 화면에서 신체 일부 또는 전체가 식별 가능한 작업자</td><td>머리·몸통 등 사람임을 판단 가능</td><td>사진, 포스터, 사람 모형, 반사 형상</td></tr>
+      <tr><td><code>helmet</code></td><td>작업자가 머리에 착용한 산업용 안전모</td><td>안전모 외곽이 식별 가능</td><td>일반 모자, 후드, 손에 든 안전모</td></tr>
+      <tr><td><code>vest</code></td><td>작업자가 상체에 착용한 안전조끼</td><td>조끼 형태 또는 반사띠 식별</td><td>일반 상의, 손에 든 조끼</td></tr>
+    </table>
+
+    <h3>11-2. 속성 라벨</h3>
+    <table>
+      <tr><th>속성</th><th>클래스</th></tr>
+      <tr><td>안전모 색상</td><td>흰색·노란색·빨간색·파란색·기타·불명확</td></tr>
+      <tr><td>안전조끼 색상</td><td>노란색·주황색·기타·불명확</td></tr>
+      <tr><td>상의 색상</td><td>검정·흰색·회색·남색·파랑·빨강·기타·불명확</td></tr>
+      <tr><td>가시성</td><td>높음·중간·낮음</td></tr>
+    </table>
+
+    <h3>11-3. 이벤트 라벨</h3>
+    <table>
+      <tr><th>이벤트</th><th>정의</th></tr>
+      <tr><td><code>exit_crossing</code></td><td>작업자가 출구선을 내부에서 외부로 완전히 통과</td></tr>
+      <tr><td><code>reentry</code></td><td>대피 확인 후 외부에서 내부로 재통과</td></tr>
+      <tr><td><code>inside_observed</code></td><td>경보 후에도 내부 구역에서 계속 관측</td></tr>
+      <tr><td><code>tracking_lost</code></td><td>출구 통과 없이 작업자 추적이 중단</td></tr>
+      <tr><td><code>evacuated</code></td><td>출구 통과 장면 확인</td></tr>
+      <tr><td><code>exit_unconfirmed</code></td><td>대피·내부 잔류 여부를 현재 영상만으로 확인할 수 없음</td></tr>
+      <tr><td><code>camera_failure</code></td><td>영상 입력 중단 또는 분석 불가능 상태</td></tr>
+    </table>
+
+    <h3>11-4. 애매한 사례 처리 기준</h3>
+    <table>
+      <tr><th>상황</th><th>처리 기준</th></tr>
+      <tr><td>조명 때문에 안전모 색상이 불명확</td><td><code>불명확</code></td></tr>
+      <tr><td>사람이 일반 화면 가장자리로 나감</td><td>대피가 아닌 <code>tracking_lost</code></td></tr>
+      <tr><td>출구 앞에 있으나 통과하지 않음</td><td>내부 상태 유지</td></tr>
+      <tr><td>출구선에 잠깐 닿았다가 되돌아감</td><td>대피 처리하지 않음</td></tr>
+      <tr><td>두 사람이 동일한 작업복 착용</td><td>복장만으로 동일인 병합 금지</td></tr>
+      <tr><td>카메라 영상이 중단</td><td>중단 직전 마지막 위치 유지</td></tr>
+    </table>
+  </section>
+
+  <section class="section" id="experiments">
+    <h2>12. 모델 실험 계획</h2>
+    <table>
+      <tr><th>실험</th><th>변경 내용</th><th>확인 지표</th><th>기대 목적</th></tr>
+      <tr><td>1차</td><td>기본 사람 탐지 데이터 학습</td><td>mAP, Precision, Recall</td><td>베이스라인 확보</td></tr>
+      <tr><td>2차</td><td>가림·원거리 작업자 추가</td><td>Person Recall</td><td>놓치는 사람 감소</td></tr>
+      <tr><td>3차</td><td>저조도·블러·디지털 연기 증강</td><td>Recall, 저시야 성능</td><td>화재 상황 강건성</td></tr>
+      <tr><td>4차</td><td>안전모·조끼 데이터 추가</td><td>PPE mAP·F1</td><td>구조 속성 분석</td></tr>
+      <tr><td>5차</td><td>클래스 불균형 보완</td><td>클래스별 Recall</td><td>소수 클래스 개선</td></tr>
+      <tr><td>6차</td><td>오탐·미탐 오류 데이터 재수집</td><td>Recall, Precision</td><td>실제 실패 사례 개선</td></tr>
+      <tr><td>7차</td><td>객체 추적 연결</td><td>IDF1, ID Switch</td><td>동일 작업자 ID 유지</td></tr>
+      <tr><td>8차</td><td>가상선 통과 규칙 적용</td><td>출구 통과 F1</td><td>대피 이행 판정</td></tr>
+      <tr><td>9차</td><td>동일 복장·집단 통과 시험</td><td>ID Switch, 집계 정확도</td><td>어려운 상황 검증</td></tr>
+      <tr><td>10차</td><td>상태 임계값 조정</td><td>False All-Clear</td><td>안전 오류 최소화</td></tr>
+    </table>
+  </section>
+
+  <section class="section" id="metrics">
+    <h2>13. 성능평가 지표</h2>
+    <h3>13-1. 모델 단위 지표</h3>
+    <table>
+      <tr><th>지표</th><th>의미</th></tr>
+      <tr><td>Person mAP</td><td>작업자 탐지의 전체 성능</td></tr>
+      <tr><td>Person Precision</td><td>탐지한 작업자 중 실제 작업자인 비율</td></tr>
+      <tr><td>Person Recall</td><td>실제 작업자를 놓치지 않고 탐지한 비율</td></tr>
+      <tr><td>PPE mAP</td><td>안전모·안전조끼 탐지 성능</td></tr>
+      <tr><td>IDF1</td><td>동일 작업자의 추적 ID 유지 성능</td></tr>
+      <tr><td>ID Switch</td><td>작업자 ID가 잘못 바뀐 횟수</td></tr>
+    </table>
+
+    <h3>13-2. 서비스 단위 지표</h3>
+    <table>
+      <tr><th>지표</th><th>의미</th></tr>
+      <tr><td>출구 통과 판정 F1</td><td>실제 출구 통과 이벤트와 시스템 판정 비교</td></tr>
+      <tr><td>미확인 작업자 Recall</td><td>실제 출구 미확인 작업자를 경고한 비율</td></tr>
+      <tr><td>마지막 구역 정확도</td><td>추적이 끊긴 작업자의 마지막 구역 정확도</td></tr>
+      <tr><td>구조카드 속성 정확도</td><td>안전모·조끼·상의 결과의 항목별 정확도</td></tr>
+      <tr><td>False All-Clear Rate</td><td>사람이 미확인인데 전원 대피로 잘못 판정한 비율</td></tr>
+      <tr><td>구조카드 생성시간</td><td>화재신호 후 결과 출력까지 걸린 시간</td></tr>
+    </table>
+
+    <p class="callout danger"><strong>가장 중요한 안전 지표:</strong> False All-Clear Rate. 사람이 내부에 남아 있거나 출구 통과가 확인되지 않았는데 시스템이 “전원 대피”로 잘못 표시하는 상황을 최소화한다.</p>
+  </section>
+
+  <section class="section" id="mvp">
+    <h2>14. MVP 구현 범위</h2>
+    <h3>14-1. 필수 구현</h3>
+    <ul>
+      <li>고정 카메라 영상 입력</li>
+      <li>작업자 탐지와 단일 카메라 내 추적</li>
+      <li>카메라별 구역 매핑과 출구 가상선</li>
+      <li>대피 확인·내부 관측·출구 미확인 상태</li>
+      <li>마지막 관측 구역·시각·이미지</li>
+      <li>선명한 참조 프레임 선택</li>
+      <li>안전모·안전조끼·상의 분석</li>
+      <li>구조 브리핑 카드와 관리자 대시보드</li>
+      <li>다국어 대피 문구</li>
+    </ul>
+
+    <h3>14-2. 제외 기능</h3>
+    <ul>
+      <li>실제 119 시스템 자동 연동</li>
+      <li>얼굴인식과 사번 매칭</li>
+      <li>공장 전체 다중 카메라 Re-ID</li>
+      <li>체형·성별·나이·국적 추정</li>
+      <li>화재 확산 물리 시뮬레이션</li>
+      <li>소방대원 수색 경로 자동 명령</li>
+      <li>AI 단독 전원 대피 선언</li>
+      <li>소화기 사용 또는 가연성 물질 제거 행동 명령</li>
+    </ul>
+  </section>
+
+  <section class="section" id="demo">
+    <h2>15. 데모 시나리오</h2>
+    <ol>
+      <li>작업자 4명이 공장 내부에서 작업한다.</li>
+      <li>관리자가 B구역 화재 버튼을 누른다.</li>
+      <li>전광판과 음성으로 사용 가능한 출구를 다국어 안내한다.</li>
+      <li>P01과 P02가 출구 1로 대피한다.</li>
+      <li>P03이 출구 2로 대피한다.</li>
+      <li>P04는 C구역 방향으로 이동한다.</li>
+      <li>디지털 연기 또는 설비 가림으로 P04의 추적이 중단된다.</li>
+      <li>시스템은 P01~P03의 출구 통과를 확인한다.</li>
+      <li>P04는 출구 통과 기록 없이 추적이 중단되어 <code>출구 미확인</code>으로 표시된다.</li>
+      <li>P04의 마지막 관측 구역·시각·방향을 저장한다.</li>
+      <li>가장 선명한 참조 이미지를 선택해 구조카드를 만든다.</li>
+      <li>관리자가 구조카드를 검토한 뒤 지휘관용 화면으로 전환한다.</li>
+    </ol>
+  </section>
+
+  <section class="section" id="dashboard">
+    <h2>16. 대시보드 구성</h2>
+    <table>
+      <tr><th>영역</th><th>표시 내용</th></tr>
+      <tr><td>상단 요약</td><td>화재구역, 경보시각, 관측 인원, 대피 확인, 내부 관측, 출구 미확인</td></tr>
+      <tr><td>평면도</td><td>A·B·C구역, 화재구역, 사용 불가 통로, 출구, 마지막 관측 위치, 사각지대</td></tr>
+      <tr><td>작업자 타임라인</td><td>경보 시작, 구역 이동, 마지막 관측, 추적 중단, 출구 통과 기록</td></tr>
+      <tr><td>구조카드</td><td>마지막 이미지, 참조 이미지, 위치·시각, 복장, 신뢰도, 관리자 확인</td></tr>
+    </table>
+  </section>
+
+  <section class="section" id="risks">
+    <h2>17. 예상 문제와 대응 방안</h2>
+    <table>
+      <tr><th>예상 문제</th><th>위험</th><th>대응 방안</th></tr>
+      <tr><td>연기로 사람이 보이지 않음</td><td>현재 위치 확인 실패</td><td>화재 전 마지막 관측 위치와 참조 이미지 제공</td></tr>
+      <tr><td>사람이 사각지대로 이동</td><td>대피 여부 오판</td><td>출구 통과가 없으면 출구 미확인 처리</td></tr>
+      <tr><td>동일 복장 작업자 교차</td><td>ID 혼동</td><td>복장만으로 동일인 병합 금지, ID Switch 평가</td></tr>
+      <tr><td>여러 명이 동시에 출구 통과</td><td>집계 누락</td><td>궤적 기반 가상선 통과 분석</td></tr>
+      <tr><td>CCTV 영상 중단</td><td>실시간 추적 불가</td><td>중단 직전 마지막 위치·시각 유지</td></tr>
+      <tr><td>작업자를 탐지하지 못함</td><td>False All-Clear</td><td>관리자 승인 전 전원 대피 확정 금지</td></tr>
+      <tr><td>다국어 문장 오류</td><td>잘못된 안내</td><td>사전에 검수된 고정 문장만 사용</td></tr>
+    </table>
+  </section>
+
+  <section class="section" id="privacy">
+    <h2>18. 개인정보 보호 설계</h2>
+    <table>
+      <tr><th>원칙</th><th>적용 방식</th></tr>
+      <tr><td>얼굴인식 금지</td><td>얼굴 임베딩과 신원 데이터베이스를 구축하지 않음</td></tr>
+      <tr><td>신원 비연결</td><td>이름·사번·국적과 임시 ID를 연결하지 않음</td></tr>
+      <tr><td>민감특성 추정 금지</td><td>국적·인종·성별·나이·체형을 추정하지 않음</td></tr>
+      <tr><td>목적 제한</td><td>화재 대피 확인과 구조지원 목적으로만 활용</td></tr>
+      <tr><td>최소 수집</td><td>구조에 필요한 이미지와 제한된 속성만 추출</td></tr>
+      <tr><td>접근 제한</td><td>안전관리자·방재실·현장 지휘관만 열람</td></tr>
+      <tr><td>관리자 검토</td><td>외부 제시 전 사람이 결과 확인</td></tr>
+      <tr><td>상황 종료 후 삭제</td><td>정해진 기간 이후 임시 ID와 구조카드 삭제</td></tr>
+    </table>
+  </section>
+
+  <section class="section" id="limits">
+    <h2>19. 서비스 한계</h2>
+    <ul>
+      <li>CCTV가 설치되지 않은 구역은 분석할 수 없다.</li>
+      <li>화장실·탈의실처럼 촬영이 제한된 공간의 재실자는 확인할 수 없다.</li>
+      <li>심한 연기·정전·카메라 파손 이후 현재 위치는 알 수 없다.</li>
+      <li>동일한 복장을 입은 여러 사람이 교차하면 추적 ID가 바뀔 수 있다.</li>
+      <li>마지막 관측 위치는 현재 위치가 아니다.</li>
+      <li>AI 결과만으로 소방대원의 진입 여부나 수색 경로를 결정해서는 안 된다.</li>
+      <li>실제 화재영상이 아닌 연출·합성 데이터를 사용하므로 현장 성능은 별도 검증이 필요하다.</li>
+    </ul>
+  </section>
+
+  <section class="section" id="effects">
+    <h2>20. 기대 효과</h2>
+    <table>
+      <tr><th>대상</th><th>기대 효과</th></tr>
+      <tr><td>안전관리자</td><td>여러 CCTV를 직접 되돌려보는 시간을 줄이고 대피 현황을 빠르게 파악</td></tr>
+      <tr><td>방재실</td><td>작업자별 출구 통과와 추적 중단 상태를 구조화하여 확인</td></tr>
+      <tr><td>자위소방대</td><td>우선 확인이 필요한 구역을 빠르게 식별</td></tr>
+      <tr><td>소방대 지휘관</td><td>출구 미확인 작업자의 마지막 관측 위치와 모습을 신속히 파악</td></tr>
+      <tr><td>외국인 근로자</td><td>다국어·픽토그램 안내로 대피 지시 인지 지원</td></tr>
+      <tr><td>사업장</td><td>기존 CCTV를 활용한 보조 시스템으로 제안 가능</td></tr>
+    </table>
+  </section>
+
+  <section class="section" id="roadmap">
+    <h2>21. 향후 확장 방향</h2>
+    <h3>1단계. MVP</h3>
+    <p>카메라 2대, 작업구역 3개, 출구 2개, 작업자 2~4명, 단일 카메라 내 추적, 구조카드와 대시보드 구현</p>
+    <h3>2단계. 현장 PoC</h3>
+    <p>실제 공장 CCTV 영상 확보, 카메라별 시야·출구·사각지대 설정, 작업환경별 재학습, 사용자 평가</p>
+    <h3>3단계. 시스템 연동 검토</h3>
+    <p>화재수신기 경계구역 신호 연동, 현장 내부망 배포, 접근권한과 보관정책 수립, 법적·보안 검토</p>
+  </section>
+
+  <section class="section" id="submission">
+    <h2>22. 최종 제출 보고서 작성 구조</h2>
+    <table>
+      <tr><th>항목</th><th>작성 내용</th></tr>
+      <tr><td>참가자 정보</td><td>팀명, 팀장, 트랙, 자체 주제, Superb AI 프로젝트 링크</td></tr>
+      <tr><td>클래스 정의서</td><td>클래스명, 정의, 포함·제외 기준, 애매한 사례, 라벨링 유의사항</td></tr>
+      <tr><td>모델 실험 로그</td><td>실험 번호, 변경 사항, 성능 결과, 주요 오류, 다음 개선</td></tr>
+      <tr><td>최종 모델 성능</td><td>Precision, Recall, F1, mAP, 테스트 데이터 수</td></tr>
+      <tr><td>서비스 구현</td><td>데모 링크, 서비스 소개, 화면, 처리 흐름</td></tr>
+      <tr><td>기대효과·한계</td><td>현장 활용 시나리오, 안전성 향상, 서비스 한계와 개선 방향</td></tr>
+    </table>
+  </section>
+
+  <section class="section" id="presentation">
+    <h2>23. 최종 발표 구성</h2>
+    <h3>문제</h3>
+    <p>화재경보는 울리지만 모든 작업자가 실제로 출구를 통과했는지는 자동으로 확인되지 않습니다.</p>
+    <h3>해결책</h3>
+    <p>LastSight AI는 CCTV 영상에서 작업자를 탐지·추적하고, 출구 가상선 통과를 기준으로 대피 이행을 확인합니다.</p>
+    <h3>안전 원칙</h3>
+    <p>출구 통과 없이 추적이 끊긴 작업자는 대피 완료가 아니라 출구 미확인으로 분류합니다.</p>
+    <h3>차별점</h3>
+    <p class="lead">화재를 발견하는 AI가 아니라, 화재 이후 어디에서 누구를 우선 확인해야 하는지 알려주는 AI입니다.</p>
+  </section>
+
+  <section class="section" id="faq">
+    <h2>24. 심사위원 예상 질문과 답변</h2>
+    <h3>Q1. 카메라에서 사람이 사라지면 대피한 것으로 잘못 판단하지 않나요?</h3>
+    <p>출구선을 내부에서 외부로 완전히 통과한 장면이 확인된 경우만 대피 확인으로 처리한다. 출구 통과 없이 화면에서 사라지면 <code>출구 미확인</code>으로 분류한다.</p>
+
+    <h3>Q2. 잔류 인원 수를 정확하게 알 수 있나요?</h3>
+    <p>공장 전체 잔류 인원을 확정하는 시스템은 아니다. CCTV 관측 범위 내에서 출구 통과가 확인된 사람과 확인되지 않은 사람을 구분하는 보조 시스템이다.</p>
+
+    <h3>Q3. 동일한 작업복을 입은 작업자를 어떻게 구분하나요?</h3>
+    <p>복장만으로 동일인을 확정하지 않는다. 객체 추적의 임시 ID를 사용하며, IDF1과 ID Switch를 평가한다.</p>
+
+    <h3>Q4. 왜 얼굴인식을 사용하지 않나요?</h3>
+    <p>신원 자동식별이 반드시 필요하지 않고 개인정보 부담이 크기 때문이다. 사건 내 임시 ID와 참조 이미지, 보호구·복장 정보만 제공한다.</p>
+
+    <h3>Q5. Superb AI 플랫폼은 어디에 사용하나요?</h3>
+    <p>데이터 관리, 영상·이미지 라벨링, 품질 검수, 모델 학습 또는 학습용 데이터 구축, 오류 데이터 선별과 반복 개선에 활용한다.</p>
+  </section>
+
+  <section class="section" id="summary">
+    <h2>25. 최종 요약</h2>
+    <table>
+      <tr><th>질문</th><th>답변</th></tr>
+      <tr><td>무엇을 해결하는가?</td><td>화재경보 이후 작업자의 실제 출구 통과 여부와 미확인자의 마지막 관측 정보를 파악하기 어려운 문제</td></tr>
+      <tr><td>Vision AI가 필요한가?</td><td>작업자 탐지·추적, 출구 통과 판정, 보호구·복장 분석에 필요</td></tr>
+      <tr><td>기존 화재설비와 겹치는가?</td><td>기존 설비는 화재 감지와 경보, LastSight AI는 경보 이후 대피 이행과 구조정보를 제공</td></tr>
+      <tr><td>다국어 기능은 어떻게 연결되는가?</td><td>사업장 주요 언어와 픽토그램으로 대피를 안내하고 이후 실제 출구 통과를 확인</td></tr>
+      <tr><td>가장 중요한 안전설계는?</td><td>출구 통과가 확인되지 않은 작업자를 대피 완료로 처리하지 않음</td></tr>
+      <tr><td>2명이 구현할 수 있는가?</td><td>카메라 2대·구역 3개·출구 2개로 제한하면 MVP 구현 가능</td></tr>
+      <tr><td>공모전 경쟁력은 무엇인가?</td><td>문제 재정의, 예외상황 중심 데이터 설계, 정량 평가, 실제 서비스 데모</td></tr>
+    </table>
+
+    <p class="lead"><strong>최종 기획 문장</strong><br>LastSight AI는 화재 발생 시 다국어와 시각정보로 대피를 안내하고, CCTV 관측 범위 내 작업자의 출구 통과 여부를 분석한다. 출구 통과가 확인되지 않은 작업자에 대해서는 마지막 관측 위치·시각·이미지와 제한된 보호구·복장 정보를 구조 브리핑 카드로 제공하여 현장 관리자의 대응과 소방대의 초기 상황 파악을 지원한다.</p>
+
+    <a class="top-link" href="#top">맨 위로 이동</a>
+    <p class="footnote">본 문서는 Superb AI X BDAI 해커톤 과제 정의서, 1차 분석 결과보고서 양식, 기존 LastSight AI 기획서를 바탕으로 정리한 HTML 버전입니다.</p>
+  </section>
+
+</div>
+</body>
+</html>
