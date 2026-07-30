@@ -62,3 +62,22 @@ def test_low_confidence_detection_rescues_existing_track_through_occlusion():
     r2 = tracker.update([_det(1, 1, 11, 21, confidence=0.3)])
     assert len(r2) == 1
     assert r2[0].track_id == r1[0].track_id
+
+
+def test_size_similarity_breaks_ties_toward_matching_scale():
+    """IoU만 보면 더 큰 박스(20x20)가 근소하게 앞서지만(0.25 > 0.22),
+    원래 크기(10x10)와 비슷한 박스가 크기 유사도 가중치 덕분에 같은 트랙으로 이어져야 한다."""
+    tracker = ByteTracker(iou_threshold=0.2)
+    r1 = tracker.update([_det(0, 0, 10, 10)])
+    original_id = r1[0].track_id
+
+    r2 = tracker.update(
+        [
+            _det(4, 4, 14, 14),  # 크기(10x10)는 같지만 IoU는 더 낮음(≈0.22)
+            _det(0, 0, 20, 20),  # 크기(20x20)는 다르지만 IoU는 더 높음(0.25)
+        ]
+    )
+
+    matched = next(r for r in r2 if r.detection.bbox_xyxy == (4, 4, 14, 14))
+    assert matched.track_id == original_id
+    assert len(r2) == 2  # 크기가 다른 큰 박스는 원래 트랙에 붙지 않고 새 트랙으로 분리됨

@@ -40,6 +40,23 @@ def _center(b: BBox) -> tuple[float, float]:
     return ((b[0] + b[2]) / 2, (b[1] + b[3]) / 2)
 
 
+def _size_similarity(a: BBox, b: BBox) -> float:
+    """두 박스의 가로·세로 크기가 얼마나 비슷한지 (0~1, 1이면 동일 크기).
+
+    카메라와의 거리가 다른 두 사람은 박스 크기도 다르게 찍히므로, 겹침(IoU)만으로
+    헷갈리는 순간(두 사람이 스치듯 겹쳐 지나가는 등)에 크기 정보로 보조 판단한다.
+    얼굴·복장 색상 등 신원과 관련된 정보는 전혀 쓰지 않는다(CLAUDE.md 2번 절대 원칙 —
+    "동일 복장 = 동일인이 아니다") — 순전히 박스의 기하학적 크기만 비교한다.
+    """
+    aw, ah = a[2] - a[0], a[3] - a[1]
+    bw, bh = b[2] - b[0], b[3] - b[1]
+    if aw <= 0 or ah <= 0 or bw <= 0 or bh <= 0:
+        return 0.0
+    width_ratio = min(aw, bw) / max(aw, bw)
+    height_ratio = min(ah, bh) / max(ah, bh)
+    return width_ratio * height_ratio
+
+
 @dataclass
 class _Track:
     track_id: str
@@ -72,6 +89,9 @@ class ByteTracker:
     iou_threshold: float = 0.3
     high_conf_threshold: float = 0.5
     max_lost_frames: int = 30
+    # 매칭 순위를 매길 때 크기 유사도를 얼마나 반영할지 (0=완전히 IoU만, 1=완전히 크기만).
+    # 메인 기준은 항상 위치(IoU)이고, 크기 유사도는 어느 후보를 먼저 확정할지 정하는 보조 기준일 뿐이다.
+    size_similarity_weight: float = 0.2
 
     _tracks: dict[str, _Track] = field(default_factory=dict, init=False, repr=False)
     _next_id: int = field(default=1, init=False, repr=False)
@@ -86,6 +106,11 @@ class ByteTracker:
 
         헝가리안 알고리즘 대신 그리디를 쓰는 이유: 한 프레임에 사람이 소수(수 명~수십 명)라
         전역 최적화 없이도 충분하고, scipy 등 추가 의존성 없이 순수 파이썬으로 구현 가능.
+
+        후보로 남는 기준(threshold)은 IoU 하나뿐이지만, 그중 어느 후보를 먼저 확정할지
+        정하는 순위는 IoU와 박스 크기 유사도를 함께 본다 — 두 사람이 스쳐 지나가며
+        겹칠 때, 위치만으로는 헷갈려도 카메라 거리가 다르면 박스 크기가 달라서
+        잘못된 매칭을 먼저 확정하는 걸 줄여준다(메인 기준은 여전히 위치).
         """
         candidates = []
         for tid in track_ids:
@@ -93,7 +118,9 @@ class ByteTracker:
             for di, det in enumerate(detections):
                 iou = _iou(predicted, det.bbox_xyxy)
                 if iou >= self.iou_threshold:
-                    candidates.append((iou, tid, di))
+                    size_sim = _size_similarity(predicted, det.bbox_xyxy)
+                    score = (1 - self.size_similarity_weight) * iou + self.size_similarity_weight * size_sim
+                    candidates.append((score, tid, di))
         candidates.sort(key=lambda c: c[0], reverse=True)
 
         matched_tracks: set[str] = set()
