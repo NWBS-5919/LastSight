@@ -18,6 +18,7 @@ def evaluate(
     zone_id: str | None = None,
     confidence_threshold: float = 0.6,
     min_hit_ratio: float = 0.6,
+    min_window_size: int = 5,
 ) -> FireAlert | None:
     """최근 N프레임의 fire/smoke 탐지 이력을 보고 경보를 발생시킬지 판정.
 
@@ -25,8 +26,13 @@ def evaluate(
     confidence_threshold를 넘는 탐지가 있어야 트리거한다 (기본: 최근 프레임의 60% 이상).
     이 값들은 임의 기본값이므로 실제 데이터로 튜닝하고 experiments/logs/에 기록할 것 —
     너무 낮으면 오탐(false alarm), 너무 높으면 놓침(False All-Clear 위험)으로 이어진다.
+
+    `min_window_size`: recent_detections가 아직 이 개수만큼 안 쌓였으면(카메라가 막
+    켜졌거나 화재경보 판정을 막 시작한 시점) 트리거하지 않는다. 이게 없으면 프레임
+    1~2개짜리 작은 표본에서 우연히 오탐 1건만 있어도 비율이 100%가 되어 바로 경보가
+    울리는 결함이 있었다(development_log.md 참고, 데모 시나리오에서 실측으로 발견).
     """
-    if not recent_detections:
+    if len(recent_detections) < min_window_size:
         return None
 
     hits = sum(

@@ -1,0 +1,128 @@
+[
+  {
+    "track_id": "T0014",
+    "event": "inside_observed",
+    "zone": "B구역",
+    "at": "2026-07-31T11:00:25.612654+00:00"
+  },
+  {
+    "track_id": "T0014",
+    "event": "tracking_lost",
+    "zone": "B구역",
+    "at": "2026-07-31T11:00:26.612654+00:00"
+  },
+  {
+    "track_id": "T0014",
+    "event": "inside_observed",
+    "zone": "B구역",
+    "at": "2026-07-31T11:01:16.958088+00:00"
+  },
+  {
+    "track_id": "T0014",
+    "event": "tracking_lost",
+    "zone": "B구역",
+    "at": "2026-07-31T11:01:17.958088+00:00"
+  },
+  {
+    "track_id": "T0014",
+    "event": "inside_observed",
+    "zone": "B구역",
+    "at": "2026-07-31T11:04:24.671739+00:00"
+  },
+  {
+    "track_id": "T0014",
+    "event": "inside_observed",
+    "zone": "B구역",
+    "at": "2026-07-31T11:04:32.007844+00:00"
+  },
+  {
+    "track_id": "T0014",
+    "event": "tracking_lost",
+    "zone": "B구역",
+    "at": "2026-07-31T11:04:33.007844+00:00"
+  },
+  {
+    "track_id": "T0014",
+    "event": "prolonged_presence",
+    "zone": "A구역",
+    "at": "2026-07-31T11:08:30.621131+00:00"
+  },
+  {
+    "track_id": "T0014",
+    "event": "tracking_lost",
+    "zone": "A구역",
+    "at": "2026-07-31T11:08:31.621131+00:00"
+  },
+  {
+    "track_id": "T0014",
+    "event": "prolonged_presence",
+    "zone": "A구역",
+    "at": "2026-07-31T11:08:38.621131+00:00"
+  },
+  {
+    "track_id": "T0014",
+    "event": "tracking_lost",
+    "zone": "A구역",
+    "at": "2026-07-31T11:08:39.621131+00:00"
+  },
+  {
+    "track_id": "T0014",
+    "event": "prolonged_presence",
+    "zone": "A구역",
+    "at": "2026-07-31T11:08:46.621131+00:00"
+  },
+  {
+    "track_id": "T0014",
+    "event": "tracking_lost",
+    "zone": "A구역",
+    "at": "2026-07-31T11:08:47.621131+00:00"
+  },
+  {
+    "track_id": "T0014",
+    "event": "prolonged_presence",
+    "zone": "A구역",
+    "at": "2026-07-31T11:09:20.675835+00:00"
+  },
+  {
+    "track_id": "T0014",
+    "event": "tracking_lost",
+    "zone": "A구역",
+    "at": "2026-07-31T11:09:21.675835+00:00"
+  },
+  {
+    "track_id": "T0014",
+    "event": "prolonged_presence",
+    "zone": "A구역",
+    "at": "2026-07-31T11:09:28.675835+00:00"
+  },
+  {
+    "track_id": "T0014",
+    "event": "tracking_lost",
+    "zone": "A구역",
+    "at": "2026-07-31T11:09:29.675835+00:00"
+  },
+  {
+    "track_id": "T0014",
+    "event": "prolonged_presence",
+    "zone": "A구역",
+    "at": "2026-07-31T11:09:36.675835+00:00"
+  },
+  {
+    "track_id": "T0014",
+    "event": "tracking_lost",
+    "zone": "A구역",
+    "at": "2026-07-31T11:09:37.675835+00:00"
+  },
+  {
+    "track_id": "T0014",
+    "event": "inside_observed",
+    "zone": "B구역",
+    "at": "2026-07-31T11:15:00.682521+00:00"
+  },
+  {
+    "track_id": "T0014",
+    "event": "tracking_lost",
+    "zone": "B구역",
+    "at": "2026-07-31T11:15:01.032521+00:00"
+  }
+]

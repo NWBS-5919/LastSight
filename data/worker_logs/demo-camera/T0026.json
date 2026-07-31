@@ -1,0 +1,26 @@
+[
+  {
+    "track_id": "T0026",
+    "event": "prolonged_presence",
+    "zone": "B구역",
+    "at": "2026-07-31T11:00:36.612654+00:00"
+  },
+  {
+    "track_id": "T0026",
+    "event": "tracking_lost",
+    "zone": "B구역",
+    "at": "2026-07-31T11:00:37.612654+00:00"
+  },
+  {
+    "track_id": "T0026",
+    "event": "prolonged_presence",
+    "zone": "B구역",
+    "at": "2026-07-31T11:01:27.958088+00:00"
+  },
+  {
+    "track_id": "T0026",
+    "event": "tracking_lost",
+    "zone": "B구역",
+    "at": "2026-07-31T11:01:28.958088+00:00"
+  }
+]

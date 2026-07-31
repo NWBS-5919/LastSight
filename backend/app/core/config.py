@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     superb_ai_tenant: str = ""
     superb_ai_api_key: str = ""
     ppe_deployment_id: str = ""  # BDAI에 배포한 person/helmet/vest 모델의 deployment ID
+    fire_smoke_deployment_id: str = ""  # BDAI에 배포한 fire/smoke v4 커스텀 모델의 deployment ID (없으면 ZERO 제로샷으로 폴백)
     backend_host: str = "0.0.0.0"
     backend_port: int = 8000
 

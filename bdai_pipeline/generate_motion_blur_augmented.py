@@ -56,7 +56,11 @@ def main() -> None:
     skipped = 0
 
     for img in images:
-        boxes = [(a.geometry["x"], a.geometry["y"], a.geometry["w"], a.geometry["h"]) for a in img.annotations if a.geometry["type"] == "bbox"]
+        annotated_boxes = [
+            (a.class_name, (a.geometry["x"], a.geometry["y"], a.geometry["w"], a.geometry["h"]))
+            for a in img.annotations
+            if a.geometry["type"] == "bbox"
+        ]
 
         src = cv2.imread(str(img.path))
         if src is None:
@@ -67,7 +71,7 @@ def main() -> None:
             rng = np.random.default_rng(hash((img.filename, copy_idx)) % (2**32))
             from bdai_pipeline.synth_motion_blur import add_synthetic_motion_blur
 
-            out_img = add_synthetic_motion_blur(src, rng, boxes or None, strength="random")
+            out_img = add_synthetic_motion_blur(src, rng, annotated_boxes or None, strength="random")
             out_name = f"{img.path.stem}_blur{copy_idx}.jpg"
             cv2.imwrite(str(out_dir / out_name), out_img)
 

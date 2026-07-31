@@ -15,6 +15,14 @@ class ObjectClass(StrEnum):
     VEST = "vest"
     FIRE = "fire"
     SMOKE = "smoke"
+    # 2026-07-31: PPE 색상 편향 대응(CLAUDE.md 4-1 참고) — 직접 미착용 신호 학습용 보조 클래스.
+    # no_helmet은 뺐다 — SHWD(강의실 군중 데이터) 반입 후 no_helmet 라벨이 69,227개로
+    # 다른 클래스 대비 압도적으로 쏠려 클래스 불균형을 만들었고, 어차피 head+helmet IoU
+    # 규칙(app/rules/ppe_compliance.py)이 기하학적으로 미착용을 판단할 수 있어 중복이었다.
+    # vest는 head 같은 짝지을 신체 부위 클래스가 없어 no_vest를 그대로 유지한다
+    # (없으면 "미착용 확정"을 할 방법이 없어짐).
+    NO_VEST = "no_vest"
+    HEAD = "head"
 
 
 class HelmetColor(StrEnum):
@@ -73,16 +81,69 @@ class WorkerStatus(BaseModel):
     vest_color: VestColor | None = None
     top_color: str | None = None
     visibility: VisibilityLevel | None = None
+    confidence: float | None = None  # 마지막 관측 시점 person 탐지 신뢰도(0~1) — 추정치임을 드러내기 위한 보조 정보
+    situation_note: str | None = None  # PROLONGED_PRESENCE 전환 시 ZERO 추가 확인 결과로 채워지는 짧은 상황 설명 (app/rules/situation_probe.py)
+    priority_score: float | None = None  # 확인 우선순위 점수(0~100) — app/rules/triage.py, 요청 시점에 계산해 채움(저장값 아님)
 
 
 class WorkerEventLogEntry(BaseModel):
     """작업자 타임라인에 표시할 상태 변화 기록 1건. resolve_status()가 이전 상태 대비
-    event가 실제로 바뀔 때만 이 로그를 추가한다(매 프레임 남기지 않음)."""
+    event가 실제로 바뀔 때만 이 로그를 추가한다(매 프레임 남기지 않음).
+
+    2026-07-31 추가(frame_path/bbox_xyxy): 화면이 작고 복장이 통일된 CCTV 환경에서는
+    사람이 사라졌다 나타나면 추적 ID가 바뀌는 걸 막을 수 없다는 게 확인됐다(development_log.md
+    참고) — 그래서 "같은 ID로 이어 붙이기"를 시도하는 대신, 매 로그마다 그 순간의 증거 사진
+    (프레임 경로 + 박스 좌표)을 같이 남겨서 관리자가 직접 눈으로 "같은 사람인지" 판단할 수
+    있게 한다. ID가 바뀌어도 로그와 사진은 끊기지 않고 계속 쌓인다."""
 
     track_id: str
     event: WorkerEvent
     zone: str | None = None
     at: str  # ISO8601
+    situation_note: str | None = None  # PROLONGED_PRESENCE 전환 시 ZERO 추가 확인 결과(app/rules/situation_probe.py)
+    frame_path: str | None = None  # 이 로그가 기록된 순간의 프레임 이미지 URL/경로
+    bbox_xyxy: tuple[float, float, float, float] | None = None  # frame_path 위에 그릴 사람 박스 좌표
+
+
+class PpeViolationLogEntry(BaseModel):
+    """PPE 미착용이 새로 감지된 순간 1건. 이미 미착용 상태가 계속되는 동안은 매 프레임
+    남기지 않고, "착용 → 미착용"으로 바뀐 순간에만 기록한다(worker_log와 같은 원칙).
+
+    추적 ID 연속성을 신뢰하지 않는다는 전제로 설계했다 — 같은 사람이 사라졌다 다시 나타나
+    새 ID를 받아도 그냥 새 위반 건으로 다시 기록될 뿐이며, 그게 의도된 동작이다. 관리자가
+    frame_path의 사진을 보고 "혹시 아까 그 사람인가?"를 직접 판단하면 된다."""
+
+    track_id: str
+    violation: str  # "helmet" | "vest" — 어떤 장비가 미착용인지
+    zone: str | None = None
+    at: str  # ISO8601
+    frame_path: str | None = None
+    bbox_xyxy: tuple[float, float, float, float] | None = None
+    confidence: float | None = None
+
+
+class ClearanceZoneLogEntry(BaseModel):
+    """관리구역 상태 변화 기록 1건 (WorkerEventLogEntry와 같은 패턴).
+    evaluate_clearance_zone()이 계산한 새 상태가 직전과 다를 때만 한 줄 남긴다."""
+
+    zone_id: str
+    state: "ClearanceZoneState"
+    at: str  # ISO8601
+    situation_note: str | None = None  # ABNORMAL 전환 시 ZERO 추가 확인 결과(app/rules/situation_probe.py)
+
+
+class IncidentTimelineEntry(BaseModel):
+    """사고 리플레이 타임라인 한 줄 — 화재경보/작업자 상태변화/관리구역 상태변화/PPE
+    미착용을 한 종류(source)로 통합해 시간순으로 병합한 것. app/api/incidents.py에서 조립한다."""
+
+    at: str  # ISO8601
+    source: str  # "fire_alert" | "worker" | "clearance_zone" | "ppe_violation"
+    text: str  # 대시보드에 그대로 표시할 한 줄 설명
+    track_id: str | None = None
+    zone_id: str | None = None
+    situation_note: str | None = None
+    frame_path: str | None = None  # 클릭하면 이 순간의 증거 사진을 보여주기 위한 경로
+    bbox_xyxy: tuple[float, float, float, float] | None = None
 
 
 class AlarmSource(StrEnum):
@@ -156,3 +217,4 @@ class ClearanceZoneStatus(BaseModel):
     changed_since: str | None = None  # ISO8601, 변화가 처음 관측된 시각 (state != NORMAL일 때)
     last_checked_at: str | None = None  # ISO8601
     last_frame_path: str | None = None
+    situation_note: str | None = None  # ABNORMAL 전환 시 ZERO 추가 확인 결과(app/rules/situation_probe.py)

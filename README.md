@@ -9,6 +9,7 @@ SuperB AI × BDAI 해커톤 — 산업안전·물류 트랙. 자세한 배경·�
 ├── CLAUDE.md                 # 프로젝트 지침 (Claude Code가 자동으로 읽는 파일)
 ├── docs/                      # 기획서·해커톤 규정·BDAI 매뉴얼 정리본
 ├── backend/                   # FastAPI 서버 (탐지·추적·규칙엔진 결과 서빙)
+├── frontend/                  # React+Vite 대시보드 (실시간 웹소켓 연동, 데모 시나리오 재생 화면)
 ├── bdai_pipeline/              # BDAI SDK 연동 스크립트 (업로드·스키마·익스포트·학습·자동라벨링)
 ├── data/
 │   ├── raw/                   # 촬영 원본 영상 (git 추적 제외)
@@ -35,11 +36,16 @@ cd backend && uvicorn app.main:app --reload --port 8000
 
 백엔드는 `http://localhost:8000`에서 뜨고, `http://localhost:8000/docs`에서 API 계약(Swagger UI)을 바로 확인할 수 있다.
 
-> 프론트엔드(대시보드)는 이 저장소에 포함돼 있지 않다 — 프론트엔드 개발자가 위 API를 기준으로 새로 만든다. 화면 구성·표시 데이터는 `docs/screen_guide.md` 참고.
+```bash
+# 3. 프론트엔드 (백엔드가 8000번에서 떠 있어야 함)
+cd frontend && npm install && npm run dev
+```
+
+프론트엔드는 `http://localhost:5173`에서 뜨고, 웹소켓으로 백엔드(`app/ws/live.py`)와 실시간 연동해 데모 시나리오(정상 → 화재감지 → 경보 → 상태전환 → 구조카드)를 재생한다. 화면 구성·표시 데이터 상세는 `docs/screen_guide.md` 참고.
 
 ## 역할 분담
 
 - **A (데이터/라벨링)**: `bdai_pipeline/`, `data/`, BDAI 웹 화면에서 라벨링·검수·스냅샷·학습
-- **B (모델/서비스)**: `backend/`
+- **B (모델/서비스)**: `backend/`, `frontend/`
 
 자세한 파이프라인 단계와 절대 원칙(안전·개인정보)은 `CLAUDE.md`를 반드시 확인.

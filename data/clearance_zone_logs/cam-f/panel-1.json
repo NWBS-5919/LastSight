@@ -1,0 +1,26 @@
+[
+  {
+    "zone_id": "panel-1",
+    "state": "abnormal",
+    "at": "2026-01-01T12:20:00+00:00",
+    "situation_note": "2차 확인(ZERO) 결과 우려 요소 발견: 쌓여있는 적재물"
+  },
+  {
+    "zone_id": "panel-1",
+    "state": "abnormal",
+    "at": "2026-01-01T12:20:00+00:00",
+    "situation_note": "2차 확인(ZERO) 결과 우려 요소 발견: 쌓여있는 적재물"
+  },
+  {
+    "zone_id": "panel-1",
+    "state": "abnormal",
+    "at": "2026-01-01T12:20:00+00:00",
+    "situation_note": "2차 확인(ZERO) 결과 우려 요소 발견: 쌓여있는 적재물"
+  },
+  {
+    "zone_id": "panel-1",
+    "state": "abnormal",
+    "at": "2026-01-01T12:20:00+00:00",
+    "situation_note": "2차 확인(ZERO) 결과 우려 요소 발견: 쌓여있는 적재물"
+  }
+]

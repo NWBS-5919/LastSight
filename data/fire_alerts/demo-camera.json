@@ -1,0 +1,58 @@
+[
+  {
+    "camera_id": "demo-camera",
+    "zone_id": null,
+    "triggered_at": "2026-07-31T11:00:20.613408+00:00",
+    "source": "auto_detection",
+    "confidence": 0.7375231385231018
+  },
+  {
+    "camera_id": "demo-camera",
+    "zone_id": null,
+    "triggered_at": "2026-07-31T11:01:01.285204+00:00",
+    "source": "auto_detection",
+    "confidence": 0.7375231385231018
+  },
+  {
+    "camera_id": "demo-camera",
+    "zone_id": null,
+    "triggered_at": "2026-07-31T11:01:11.958524+00:00",
+    "source": "auto_detection",
+    "confidence": 0.7375231385231018
+  },
+  {
+    "camera_id": "demo-camera",
+    "zone_id": null,
+    "triggered_at": "2026-07-31T11:04:19.673523+00:00",
+    "source": "auto_detection",
+    "confidence": 0.7375231385231018
+  },
+  {
+    "camera_id": "demo-camera",
+    "zone_id": null,
+    "triggered_at": "2026-07-31T11:04:27.007990+00:00",
+    "source": "auto_detection",
+    "confidence": 0.7375231385231018
+  },
+  {
+    "camera_id": "demo-camera",
+    "zone_id": null,
+    "triggered_at": "2026-07-31T11:08:20.726990+00:00",
+    "source": "auto_detection",
+    "confidence": 0.9289788007736206
+  },
+  {
+    "camera_id": "demo-camera",
+    "zone_id": null,
+    "triggered_at": "2026-07-31T11:09:10.768031+00:00",
+    "source": "auto_detection",
+    "confidence": 0.9289788007736206
+  },
+  {
+    "camera_id": "demo-camera",
+    "zone_id": null,
+    "triggered_at": "2026-07-31T11:09:56.709574+00:00",
+    "source": "auto_detection",
+    "confidence": 0.9289788007736206
+  }
+]

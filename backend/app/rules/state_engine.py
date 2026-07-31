@@ -26,19 +26,24 @@ def resolve_status(
     last_seen_at: str | None = None,
     last_frame_path: str | None = None,
     reference_frame_path: str | None = None,
+    prolonged_presence_minutes: float = PROLONGED_PRESENCE_MINUTES,
 ) -> WorkerStatus:
     """현재 관측 상태 + 화재경보 이후 경과 시간으로 상태를 결정한다.
 
     - camera_ok=False → CAMERA_FAILURE (사람 상태와 무관하게 카메라 자체 문제 우선 표시)
     - is_currently_observed=False → TRACKING_LOST (안전 여부를 추측하지 않고 사실만 전달)
-    - is_currently_observed=True, 화재경보 후 PROLONGED_PRESENCE_MINUTES 초과 → PROLONGED_PRESENCE
+    - is_currently_observed=True, 화재경보 후 prolonged_presence_minutes 초과 → PROLONGED_PRESENCE
     - 그 외(관측 중이며 아직 임계시간 이내, 또는 화재 자체가 없음) → INSIDE_OBSERVED
+
+    prolonged_presence_minutes 기본값은 모듈 상수(PROLONGED_PRESENCE_MINUTES, 5분)를 그대로
+    쓴다 — 데모 시나리오처럼 짧은 재생 시간 안에 상태 전환을 보여줘야 할 때만 호출부에서
+    더 작은 값을 넘겨 쓴다(실제 운영 기본값 자체를 바꾸는 게 아니라 호출부 재량).
     """
     if not camera_ok:
         event = WorkerEvent.CAMERA_FAILURE
     elif not is_currently_observed:
         event = WorkerEvent.TRACKING_LOST
-    elif fire_triggered_at is not None and (now - fire_triggered_at) >= timedelta(minutes=PROLONGED_PRESENCE_MINUTES):
+    elif fire_triggered_at is not None and (now - fire_triggered_at) >= timedelta(minutes=prolonged_presence_minutes):
         event = WorkerEvent.PROLONGED_PRESENCE
     else:
         event = WorkerEvent.INSIDE_OBSERVED

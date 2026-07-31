@@ -107,6 +107,58 @@ def test_evaluate_detects_change_then_resolve_clears_it(monkeypatch, tmp_path):
     assert status_res.json()["panel-1"]["state"] == "normal"
 
 
+def test_evaluate_probes_situation_on_abnormal_transition(monkeypatch, tmp_path):
+    """OBSERVING에서 시작해, 변화 지속시간이 이미 기준을 넘긴 상태로 다시 평가하면
+    ABNORMAL로 전환되면서 situation_probe가 호출되어야 한다."""
+    _patch_dirs(monkeypatch, tmp_path)
+    _register_camera_with_zone("cam-f")
+
+    client.post(
+        "/zone-maps/cam-f/clearance-zones/panel-1/baseline",
+        files={"file": ("baseline.jpg", _jpeg_bytes(_blank_image()), "image/jpeg")},
+    )
+
+    import app.rules.clearance_zone as cz_module
+    from app.models.schemas import ClearanceZoneState, ClearanceZoneStatus
+
+    # 15분 전에 이미 변화가 시작된 것으로 직전 상태를 미리 심어둔다.
+    prev = ClearanceZoneStatus(
+        zone_id="panel-1",
+        state=ClearanceZoneState.OBSERVING,
+        changed_since="2026-01-01T12:00:00+00:00",
+        last_checked_at="2026-01-01T12:00:00+00:00",
+    )
+    cz_module.save_clearance_status("cam-f", prev)
+
+    import app.api.zone_maps as zone_maps_module
+
+    calls = {}
+
+    def fake_probe(frame, prompts):
+        calls["prompts"] = prompts
+        return "2차 확인(ZERO) 결과 우려 요소 발견: 쌓여있는 적재물"
+
+    monkeypatch.setattr(zone_maps_module, "probe_situation", fake_probe)
+
+    class _FixedDateTime(zone_maps_module.datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return cls.fromisoformat("2026-01-01T12:20:00").replace(tzinfo=tz)
+
+    monkeypatch.setattr(zone_maps_module, "datetime", _FixedDateTime)
+
+    res = client.post(
+        "/zone-maps/cam-f/clearance-zones/panel-1/evaluate",
+        files={"file": ("frame.jpg", _jpeg_bytes(_image_with_block()), "image/jpeg")},
+    )
+
+    assert res.status_code == 200
+    body = res.json()
+    assert body["state"] == "abnormal"
+    assert body["situation_note"] == "2차 확인(ZERO) 결과 우려 요소 발견: 쌓여있는 적재물"
+    assert calls["prompts"] == ["가려진 전기패널", "전기패널 앞에 쌓인 물건"]
+
+
 def test_evaluate_ignores_change_when_person_overlaps_zone(monkeypatch, tmp_path):
     _patch_dirs(monkeypatch, tmp_path)
     _register_camera_with_zone("cam-e")

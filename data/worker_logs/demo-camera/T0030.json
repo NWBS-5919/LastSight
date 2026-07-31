@@ -1,0 +1,50 @@
+[
+  {
+    "track_id": "T0030",
+    "event": "prolonged_presence",
+    "zone": "A구역",
+    "at": "2026-07-31T11:00:37.612654+00:00"
+  },
+  {
+    "track_id": "T0030",
+    "event": "tracking_lost",
+    "zone": "A구역",
+    "at": "2026-07-31T11:00:38.612654+00:00"
+  },
+  {
+    "track_id": "T0030",
+    "event": "prolonged_presence",
+    "zone": "A구역",
+    "at": "2026-07-31T11:00:50.612654+00:00"
+  },
+  {
+    "track_id": "T0030",
+    "event": "tracking_lost",
+    "zone": "A구역",
+    "at": "2026-07-31T11:00:52.612654+00:00"
+  },
+  {
+    "track_id": "T0030",
+    "event": "prolonged_presence",
+    "zone": "A구역",
+    "at": "2026-07-31T11:01:28.958088+00:00"
+  },
+  {
+    "track_id": "T0030",
+    "event": "tracking_lost",
+    "zone": "A구역",
+    "at": "2026-07-31T11:01:29.958088+00:00"
+  },
+  {
+    "track_id": "T0030",
+    "event": "prolonged_presence",
+    "zone": "A구역",
+    "at": "2026-07-31T11:01:41.958088+00:00"
+  },
+  {
+    "track_id": "T0030",
+    "event": "tracking_lost",
+    "zone": "A구역",
+    "at": "2026-07-31T11:01:43.958088+00:00"
+  }
+]

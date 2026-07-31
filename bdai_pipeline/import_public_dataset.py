@@ -187,6 +187,65 @@ def _parse_aihub176(source: Path) -> list[ParsedImage]:
     return result
 
 
+def _parse_voc(source: Path) -> list[ParsedImage]:
+    """Pascal VOC 포맷: <source>/JPEGImages/*.jpg + <source>/Annotations/*.xml (SHWD 등)."""
+    import xml.etree.ElementTree as ET
+
+    images_dir = source / "JPEGImages"
+    annotations_dir = source / "Annotations"
+
+    result = []
+    for xml_path in sorted(annotations_dir.glob("*.xml")):
+        img_path = images_dir / f"{xml_path.stem}.jpg"
+        if not img_path.exists():
+            continue
+        root = ET.parse(xml_path).getroot()
+        annotations = []
+        for obj in root.findall("object"):
+            class_name = obj.findtext("name", "")
+            box = obj.find("bndbox")
+            if box is None:
+                continue
+            x1, y1 = float(box.findtext("xmin")), float(box.findtext("ymin"))
+            x2, y2 = float(box.findtext("xmax")), float(box.findtext("ymax"))
+            w, h = x2 - x1, y2 - y1
+            if w <= 0 or h <= 0:
+                continue
+            annotations.append(
+                ParsedAnnotation(class_name=class_name, geometry={"type": "bbox", "x": x1, "y": y1, "w": w, "h": h})
+            )
+        result.append(ParsedImage(path=img_path, filename=img_path.name, annotations=annotations))
+    return result
+
+
+def _parse_csv_voc(source: Path) -> list[ParsedImage]:
+    """Roboflow "CSV(Pascal VOC 스타일)" export: <source>/*.jpg + <source>/_annotations.csv
+    (컬럼: filename,width,height,class,xmin,ymin,xmax,ymax)."""
+    import csv as csv_module
+
+    rows_by_filename: dict[str, list[dict]] = {}
+    with open(source / "_annotations.csv", newline="", encoding="utf-8") as f:
+        for row in csv_module.DictReader(f):
+            rows_by_filename.setdefault(row["filename"], []).append(row)
+
+    result = []
+    for filename, rows in rows_by_filename.items():
+        img_path = source / filename
+        if not img_path.exists():
+            continue
+        annotations = []
+        for row in rows:
+            x1, y1, x2, y2 = float(row["xmin"]), float(row["ymin"]), float(row["xmax"]), float(row["ymax"])
+            w, h = x2 - x1, y2 - y1
+            if w <= 0 or h <= 0:
+                continue
+            annotations.append(
+                ParsedAnnotation(class_name=row["class"], geometry={"type": "bbox", "x": x1, "y": y1, "w": w, "h": h})
+            )
+        result.append(ParsedImage(path=img_path, filename=filename, annotations=annotations))
+    return result
+
+
 def parse(fmt: str, source: Path) -> list[ParsedImage]:
     if fmt == "coco":
         return _parse_coco(source, polygon=False)
@@ -196,6 +255,10 @@ def parse(fmt: str, source: Path) -> list[ParsedImage]:
         return _parse_yolo(source)
     if fmt == "aihub176":
         return _parse_aihub176(source)
+    if fmt == "voc":
+        return _parse_voc(source)
+    if fmt == "csv-voc":
+        return _parse_csv_voc(source)
     raise ValueError(f"알 수 없는 format: {fmt}")
 
 
@@ -317,7 +380,7 @@ def main() -> None:
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     common = argparse.ArgumentParser(add_help=False)
-    common.add_argument("--format", choices=["coco", "coco-seg", "yolo", "aihub176"], required=True)
+    common.add_argument("--format", choices=["coco", "coco-seg", "yolo", "aihub176", "voc", "csv-voc"], required=True)
     common.add_argument("--source", required=True)
     common.add_argument("--max-images", type=int, default=None)
     common.add_argument("--dedupe-suffix", default=None, help='예: ".rf." (Roboflow 증강본 중복 제거 기준)')

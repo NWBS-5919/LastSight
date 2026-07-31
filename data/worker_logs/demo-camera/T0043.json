@@ -1,0 +1,26 @@
+[
+  {
+    "track_id": "T0043",
+    "event": "prolonged_presence",
+    "zone": "A구역",
+    "at": "2026-07-31T11:00:56.612654+00:00"
+  },
+  {
+    "track_id": "T0043",
+    "event": "tracking_lost",
+    "zone": "A구역",
+    "at": "2026-07-31T11:00:57.612654+00:00"
+  },
+  {
+    "track_id": "T0043",
+    "event": "prolonged_presence",
+    "zone": "A구역",
+    "at": "2026-07-31T11:01:47.958088+00:00"
+  },
+  {
+    "track_id": "T0043",
+    "event": "tracking_lost",
+    "zone": "A구역",
+    "at": "2026-07-31T11:01:48.958088+00:00"
+  }
+]

@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>PPE 탐지 확인 툴</title>
+<style>
+  body { font: 15px/1.5 -apple-system, "Segoe UI", sans-serif; background: #0b1120; color: #e5e7eb; margin: 0; padding: 32px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  p.sub { color: #9ca3af; margin: 0 0 24px; }
+  .panel { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px; max-width: 900px; }
+  input[type=file] { color: #e5e7eb; }
+  .row { display: flex; gap: 12px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+  label { font-size: 13px; color: #9ca3af; }
+  input[type=number] { width: 70px; background: #111827; border: 1px solid rgba(255,255,255,0.15); color: #e5e7eb; border-radius: 6px; padding: 6px; }
+  button { background: #3b82f6; color: white; border: none; border-radius: 8px; padding: 10px 18px; font-weight: 600; cursor: pointer; }
+  button:disabled { opacity: 0.5; cursor: default; }
+  #status { margin-top: 16px; color: #93c5fd; min-height: 20px; }
+  #player { margin-top: 20px; max-width: 900px; }
+  #frame { width: 100%; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); display: none; }
+  .controls { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
+  #counts { margin-top: 12px; font-size: 13px; color: #9ca3af; }
+</style>
+</head>
+<body>
+  <h1>PPE 탐지 확인 툴</h1>
+  <p class="sub">영상을 올리면 배포된 PPE 모델(person/helmet/vest)로 프레임마다 bbox를 그려서 재생합니다. 대시보드·추적과 무관한 독립 도구입니다.</p>
+
+  <div class="panel">
+    <input type="file" id="file" accept="video/*" />
+    <div class="row">
+      <label>N프레임마다 1장 <input type="number" id="sampleEvery" value="4" min="1" /></label>
+      <label>최대 프레임 수 <input type="number" id="maxFrames" value="80" min="1" max="300" /></label>
+      <label>신뢰도 임계값 <input type="number" id="confidence" value="0.5" step="0.05" min="0" max="1" /></label>
+      <button id="uploadBtn">업로드 & 분석</button>
+    </div>
+    <div id="status"></div>
+    <div id="counts"></div>
+
+    <div id="player">
+      <img id="frame" />
+      <div class="controls">
+        <button id="playBtn" disabled>재생</button>
+        <span id="frameLabel"></span>
+      </div>
+    </div>
+  </div>
+
+<script>
+const fileInput = document.getElementById('file');
+const uploadBtn = document.getElementById('uploadBtn');
+const statusEl = document.getElementById('status');
+const countsEl = document.getElementById('counts');
+const frameImg = document.getElementById('frame');
+const playBtn = document.getElementById('playBtn');
+const frameLabel = document.getElementById('frameLabel');
+
+let frames = [];
+let fps = 5;
+let idx = 0;
+let timer = null;
+
+uploadBtn.onclick = async () => {
+  const file = fileInput.files[0];
+  if (!file) { statusEl.textContent = '영상 파일을 선택해주세요.'; return; }
+
+  const sampleEvery = document.getElementById('sampleEvery').value;
+  const maxFrames = document.getElementById('maxFrames').value;
+  const confidence = document.getElementById('confidence').value;
+
+  const form = new FormData();
+  form.append('file', file);
+
+  uploadBtn.disabled = true;
+  statusEl.textContent = '업로드 & 분석 중... (프레임당 모델 호출 1회, 다소 걸릴 수 있습니다)';
+  countsEl.textContent = '';
+  playBtn.disabled = true;
+  clearInterval(timer);
+
+  try {
+    const url = `/annotate/upload?sample_every=${sampleEvery}&max_frames=${maxFrames}&confidence=${confidence}`;
+    const res = await fetch(url, { method: 'POST', body: form });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+
+    frames = data.frame_urls;
+    fps = data.playback_fps || 5;
+    idx = 0;
+
+    statusEl.textContent = `완료: ${data.frame_count}프레임 처리됨`;
+    countsEl.textContent = '클래스별 탐지 총합: ' + JSON.stringify(data.class_counts);
+
+    if (frames.length > 0) {
+      frameImg.style.display = 'block';
+      frameImg.src = frames[0];
+      playBtn.disabled = false;
+      play();
+    }
+  } catch (e) {
+    statusEl.textContent = '오류: ' + e.message;
+  } finally {
+    uploadBtn.disabled = false;
+  }
+};
+
+function play() {
+  clearInterval(timer);
+  timer = setInterval(() => {
+    idx = (idx + 1) % frames.length;
+    frameImg.src = frames[idx];
+    frameLabel.textContent = `frame ${idx + 1}/${frames.length}`;
+  }, 1000 / fps);
+  playBtn.textContent = '일시정지';
+  playBtn.onclick = pause;
+}
+
+function pause() {
+  clearInterval(timer);
+  playBtn.textContent = '재생';
+  playBtn.onclick = play;
+}
+
+playBtn.onclick = play;
+</script>
+</body>
+</html>

@@ -12,6 +12,7 @@ import cv2
 import numpy as np
 from fastapi import APIRouter, Form, HTTPException, UploadFile
 
+from app.inference.situation_probe import CLEARANCE_ZONE_PROMPTS, probe_situation
 from app.models.schemas import ClearanceZoneState, ClearanceZoneStatus, ZoneMapConfig
 from app.rules.clearance_zone import (
     baseline_image_path,
@@ -19,6 +20,7 @@ from app.rules.clearance_zone import (
     load_clearance_statuses,
     save_clearance_status,
 )
+from app.rules.clearance_zone_log import record_if_changed as record_clearance_zone_log
 from app.rules.zone import load_zone_map, save_zone_map, zone_map_path
 
 router = APIRouter(prefix="/zone-maps", tags=["zone-maps"])
@@ -139,15 +141,24 @@ async def evaluate_clearance(
         except (json.JSONDecodeError, TypeError) as e:
             raise HTTPException(status_code=400, detail=f"person_boxes 파싱 실패: {e}") from e
 
+    now = datetime.now(UTC)
     prev = load_clearance_statuses(camera_id).get(zone_id)
     status = evaluate_clearance_zone(
         zone,
         prev_status=prev,
-        now=datetime.now(UTC),
+        now=now,
         current_frame=current_frame,
         baseline_frame=baseline_frame,
         person_boxes=boxes,
     )
+
+    became_abnormal = status.state == ClearanceZoneState.ABNORMAL and (prev is None or prev.state != ClearanceZoneState.ABNORMAL)
+    if became_abnormal:
+        prompts = CLEARANCE_ZONE_PROMPTS.get(zone.zone_type.value, [])
+        if prompts:
+            status.situation_note = probe_situation(current_frame, prompts)
+
+    record_clearance_zone_log(camera_id, prev, status, now.isoformat())
     save_clearance_status(camera_id, status)
     return status
 
