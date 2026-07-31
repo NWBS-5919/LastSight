@@ -229,6 +229,15 @@ def cmd_annotate(args: argparse.Namespace) -> None:
         images = random.sample(images, args.max_images)
 
     client = get_client()
+
+    # 데이터셋에 에셋을 업로드해도 프로젝트 스코프에는 자동으로 안 들어간다(scope={"all": True}는
+    # 프로젝트 생성 시점 스냅샷일 뿐, 이후 업로드분은 별도 등록 필요) — 안 하면 bulk_create가
+    # "filename ... not found in this project's dataset"로 전부 조용히 실패한다(job 자체는
+    # completed로 뜨지만 succeeded=0). 이미 등록된 에셋은 idempotent하게 skip되므로 매번 호출해도 안전.
+    add_job = client.project_assets.bulk_add(args.project_id, filter={})
+    add_result = add_job.wait()
+    print(f"프로젝트 자산 스코프 동기화: {getattr(add_result, 'result_summary', add_result)}")
+
     classes = client.classes.list(args.project_id)
     class_id_by_name = {c.name: c.id for c in classes.classes}
     missing = {v for v in class_map.values() if v not in class_id_by_name}
@@ -278,14 +287,28 @@ def cmd_annotate(args: argparse.Namespace) -> None:
         batches.append(current)
 
     processed = 0
+    total_succeeded = 0
+    total_failed = 0
     for batch_idx, batch in enumerate(batches, start=1):
         job = client.annotations.bulk_create(args.project_id, annotations=batch, source="imported")
         result = job.wait()
         processed += len(batch)
+        succeeded = getattr(result, "succeeded", None)
+        failed = getattr(result, "failed", None)
+        total_succeeded += succeeded or 0
+        total_failed += failed or 0
         print(
             f"  배치 {batch_idx}/{len(batches)} (원본 기준 {args.skip_rows + processed - len(batch)}~): "
-            f"{len(batch)}개 반입 → {result}"
+            f"{len(batch)}개 시도 → 성공 {succeeded}, 실패 {failed}"
         )
+        if failed:
+            errors = (getattr(result, "result_summary", None) or {}).get("errors", [])
+            for err in errors[:5]:
+                print("    에러 샘플:", err)
+
+    print(f"전체 결과: 성공 {total_succeeded}개, 실패 {total_failed}개 (반입 시도 {processed}개 중)")
+    if total_failed:
+        print("⚠️  일부 라벨 반입 실패 — 위 에러 샘플 확인 필요")
         time.sleep(2)  # 연속 호출로 인한 WAF/레이트리밋 방지
 
 
