@@ -1,0 +1,14 @@
+# Docker/Render 배포용 — environment.yml(conda)과 내용을 동기화 유지할 것.
+# 로컬 개발은 여전히 `conda env create -f ../environment.yml`을 쓴다 — 이 파일은
+# conda가 없는 배포 환경(Render 등)에서 pip만으로 설치하기 위한 것.
+numpy
+opencv-python-headless
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic-settings
+python-dotenv
+websockets
+superb-ai
+openai
+httpx

@@ -56,3 +56,13 @@ _TOOLS_DIR = Path(__file__).resolve().parent / "static"
 @app.get("/tools/annotate")
 def annotate_tool_page():
     return FileResponse(_TOOLS_DIR / "annotate.html")
+
+
+# 배포(Render 등)에서는 프론트엔드 빌드 결과물을 이 백엔드가 그대로 서빙해 서비스
+# 하나로 끝낸다(Dockerfile이 frontend/dist를 여기 복사해둠) — CORS·별도 정적 호스팅이
+# 필요 없다. 로컬 개발(vite dev server, 5173 포트)에서는 이 디렉터리가 없으므로 그냥
+# 건너뛴다. 반드시 다른 라우터/마운트를 다 등록한 "뒤"에 "/"로 잡아야 API 경로를 가리지
+# 않는다.
+_FRONTEND_DIST_DIR = Path(__file__).resolve().parents[2] / "frontend" / "dist"
+if _FRONTEND_DIST_DIR.exists():
+    app.mount("/", StaticFiles(directory=_FRONTEND_DIST_DIR, html=True), name="frontend")

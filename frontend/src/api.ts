@@ -1,6 +1,9 @@
 import type { ComplianceState, PpeViolationEntry, ScenarioSnapshot, SituationSummary, ZoneMapConfig } from "./types";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
+// 배포(Render 등)에서는 백엔드가 프론트엔드 빌드를 그대로 서빙해 같은 오리진이므로
+// 상대 경로("")면 충분하다 — 로컬 개발(vite dev server, 5173)만 별도 오리진(8000)의
+// 백엔드를 가리켜야 한다. VITE_API_BASE_URL을 명시하면 항상 그 값이 우선한다.
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? "http://localhost:8000" : "");
 
 export function frameUrl(path: string): string {
   // scenario_runner가 넘겨주는 frame_image_url은 "/demo-frames/frames/xxxx.jpg" 형태.
@@ -70,7 +73,9 @@ export async function mergePpeViolations(cameraId: string, idA: string, idB: str
 }
 
 export function connectLiveSocket(onMessage: (snapshot: ScenarioSnapshot) => void): WebSocket {
-  const wsBase = API_BASE.replace(/^http/, "ws");
+  // API_BASE가 상대 경로("")일 수 있어(같은 오리진 배포) http를 ws로 바꿔치기하는
+  // 방식이 안 통한다 — 그럴 땐 현재 페이지의 origin에서 직접 ws(s) URL을 만든다.
+  const wsBase = API_BASE ? API_BASE.replace(/^http/, "ws") : `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}`;
   const ws = new WebSocket(`${wsBase}/ws/live`);
   ws.onmessage = (event) => {
     onMessage(JSON.parse(event.data));

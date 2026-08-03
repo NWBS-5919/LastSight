@@ -1,0 +1,37 @@
+# 빌드 컨텍스트를 작게 유지 — data/public_datasets(17GB)·backend/data/annotate_jobs(400MB+)
+# 같은 학습/실험용 대용량 자산은 런타임에 필요 없다. 데모 영상은 Dockerfile이 GitHub
+# Release에서 직접 받아오므로(COPY 안 함) 로컬 사본도 컨텍스트에 넣을 필요 없다.
+
+.git
+.github
+
+# 최상위 data/ 전체 — zone_maps 등 상태 파일은 앱이 최초 부팅 시 기본값으로 자동
+# 생성한다(app/pipeline/scenario_runner.py의 _register_demo_zone_map). 원본 촬영본·
+# 공개 데이터셋·학습 결과물은 런타임과 무관.
+data/
+
+backend/data/annotate_jobs/
+LastSight_Demo.mp4
+
+docs/
+experiments/
+bdai_pipeline/
+
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+**/__pycache__/
+**/*.pyc
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+
+.env
+.env.*
+!.env.example
+
+.DS_Store
+.vscode/
+.claude/
