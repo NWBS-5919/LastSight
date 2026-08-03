@@ -11,7 +11,12 @@ export function frameUrl(path: string): string {
 }
 
 // 사전계산 정지 이미지(초당 1장) 대신 원본 영상을 그대로 재생해 매끄럽게 보여주기 위한 경로.
-export const DEMO_VIDEO_URL = `${API_BASE}/demo-video/source.mp4`;
+// 2026-08-04: 처음엔 백엔드가 영상(211MB)을 직접 스트리밍했는데, Render 무료 티어(RAM
+// 512MB·CPU 0.1코어)에서 웹소켓 실시간 갱신과 동시에 돌리니 간헐적으로 503이 났다(실측).
+// GitHub Release 에셋 URL로 브라우저가 직접 요청하게 하면 Render 서버는 영상을 전혀
+// 안 거치므로 이 문제가 사라진다 — Range 요청(탐색)도 GitHub 쪽에서 지원 확인함.
+export const DEMO_VIDEO_URL =
+  import.meta.env.VITE_DEMO_VIDEO_URL ?? "https://github.com/NWBS-5919/LastSight/releases/download/demo-assets-v1/LastSight_Demo.mp4";
 
 export async function startScenario(speed = 1.0): Promise<void> {
   await fetch(`${API_BASE}/scenario/start?speed=${speed}`, { method: "POST" });
