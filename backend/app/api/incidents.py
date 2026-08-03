@@ -16,14 +16,15 @@ from app.models.schemas import (
     IncidentTimelineEntry,
     PpeViolationLogEntry,
     WorkerEventLogEntry,
+    ZoneSituationLogEntry,
 )
 from app.rules.clearance_zone_log import LOG_DIR as CLEARANCE_LOG_DIR
 from app.rules.clearance_zone_log import load_clearance_zone_log
 from app.rules.fire_alert_log import load_fire_alerts
-from app.rules.ppe_violation_log import LOG_DIR as PPE_VIOLATION_LOG_DIR
-from app.rules.ppe_violation_log import load_ppe_violation_log
+from app.rules.ppe_violation_log import format_violation_text, load_ppe_violation_log
 from app.rules.worker_log import LOG_DIR as WORKER_LOG_DIR
 from app.rules.worker_log import load_worker_log
+from app.rules.zone_situation_log import load_zone_situation_log
 
 router = APIRouter(prefix="/incidents", tags=["incidents"])
 
@@ -37,13 +38,6 @@ def _track_ids(camera_id: str) -> list[str]:
 
 def _clearance_zone_ids(camera_id: str) -> list[str]:
     d = CLEARANCE_LOG_DIR / camera_id
-    if not d.exists():
-        return []
-    return sorted(p.stem for p in d.glob("*.json"))
-
-
-def _ppe_violation_track_ids(camera_id: str) -> list[str]:
-    d = PPE_VIOLATION_LOG_DIR / camera_id
     if not d.exists():
         return []
     return sorted(p.stem for p in d.glob("*.json"))
@@ -88,11 +82,23 @@ def _ppe_violation_entry(entry: PpeViolationLogEntry) -> IncidentTimelineEntry:
     return IncidentTimelineEntry(
         at=entry.at,
         source="ppe_violation",
-        text=f"{entry.track_id} {entry.violation} 미착용 감지{zone_str}",
-        track_id=entry.track_id,
+        text=f"{format_violation_text(entry.violations)} 감지{zone_str}",
         zone_id=entry.zone,
         frame_path=entry.frame_path,
         bbox_xyxy=entry.bbox_xyxy,
+    )
+
+
+def _zone_situation_entry(entry: ZoneSituationLogEntry) -> IncidentTimelineEntry:
+    parts = []
+    for z in entry.zones:
+        breakdown_str = ", ".join(f"{k} {v}명" for k, v in z.breakdown.items() if v > 0)
+        parts.append(f"{z.zone_id} 총 {z.total}명({breakdown_str})")
+    return IncidentTimelineEntry(
+        at=entry.at,
+        source="zone_situation",
+        text=" / ".join(parts),
+        frame_path=entry.frame_path,
     )
 
 
@@ -106,9 +112,10 @@ def _build_timeline(camera_id: str) -> list[IncidentTimelineEntry]:
     for zone_id in _clearance_zone_ids(camera_id):
         for entry in load_clearance_zone_log(camera_id, zone_id):
             rows.append(_clearance_entry(entry))
-    for track_id in _ppe_violation_track_ids(camera_id):
-        for entry in load_ppe_violation_log(camera_id, track_id):
-            rows.append(_ppe_violation_entry(entry))
+    for entry in load_ppe_violation_log(camera_id):
+        rows.append(_ppe_violation_entry(entry))
+    for entry in load_zone_situation_log(camera_id):
+        rows.append(_zone_situation_entry(entry))
     return sorted(rows, key=lambda r: r.at)
 
 

@@ -12,6 +12,7 @@
 from fastapi import APIRouter, HTTPException
 
 from app.api.workers import _current_workers
+from app.pipeline import scenario_runner
 
 router = APIRouter(prefix="/briefing", tags=["briefing"])
 
@@ -33,6 +34,14 @@ def get_briefing_card(track_id: str) -> dict:
             f"마지막으로 {worker.last_seen_at or '시각 미상'}에 {worker.last_zone or '구역 미상'}에서 관측되었습니다. "
             "이 정보는 추정치이며, 현재 안전 여부를 확정하지 않습니다."
         ),
+        "first_seen_at": worker.first_seen_at,
+        "last_seen_at": worker.last_seen_at,
+        "last_zone": worker.last_zone,
         "last_frame_path": worker.last_frame_path,
-        "reference_frame_path": worker.reference_frame_path,
+        # 참조 프레임(선명도 등으로 고른 가장 알아보기 쉬운 프레임)이 있으면 그걸 우선 쓰고,
+        # 없으면(아직 후보가 안 쌓였거나 카메라 문제 등) 마지막 관측 프레임으로 대체한다.
+        "reference_frame_path": worker.reference_frame_path or worker.last_frame_path,
+        "reference_bbox_xyxy": worker.reference_bbox_xyxy or worker.current_bbox_xyxy,
+        "frame_width": scenario_runner.STATE.frame_width,
+        "frame_height": scenario_runner.STATE.frame_height,
     }

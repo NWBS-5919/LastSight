@@ -13,7 +13,8 @@ from datetime import UTC, datetime
 from fastapi import APIRouter
 
 from app.models.schemas import WorkerEvent, WorkerEventLogEntry, WorkerStatus
-from app.pipeline.scenario_runner import DEMO_CAMERA_ID, STATE
+from app.pipeline import scenario_runner
+from app.pipeline.scenario_runner import DEMO_CAMERA_ID
 from app.rules.fire_alert_log import latest_fire_alert
 from app.rules.triage import rank_workers
 from app.rules.worker_log import load_worker_log
@@ -40,7 +41,7 @@ _DUMMY_WORKERS = [
 
 
 def _current_workers() -> list[WorkerStatus]:
-    return list(STATE.workers.values()) or _DUMMY_WORKERS
+    return list(scenario_runner.STATE.workers.values()) or _DUMMY_WORKERS
 
 
 @router.get("", response_model=list[WorkerStatus])
@@ -56,7 +57,7 @@ def get_worker(track_id: str) -> WorkerStatus | None:
 @router.get("/{track_id}/timeline", response_model=list[WorkerEventLogEntry])
 def get_worker_timeline(track_id: str) -> list[WorkerEventLogEntry]:
     """"10:32:15 A구역에서 관측 시작 → 10:37:20 5분 초과 체류" 같은 상태 변화 이력."""
-    camera_id = DEMO_CAMERA_ID if STATE.workers else "camera-1"
+    camera_id = DEMO_CAMERA_ID if scenario_runner.STATE.workers else "camera-1"
     return load_worker_log(camera_id, track_id)
 
 
@@ -68,7 +69,7 @@ def get_priority_ranking() -> list[dict]:
     화재구역과의 거리·탐지 신뢰도 3가지 구성요소를 그대로 노출해 왜 이 순서인지 확인할 수
     있게 한다 (app/rules/triage.py).
     """
-    camera_id = DEMO_CAMERA_ID if STATE.workers else "camera-1"
+    camera_id = DEMO_CAMERA_ID if scenario_runner.STATE.workers else "camera-1"
     alert = latest_fire_alert(camera_id)
     zone_map = load_zone_map(camera_id)
     ranked = rank_workers(

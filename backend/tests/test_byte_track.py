@@ -64,6 +64,39 @@ def test_low_confidence_detection_rescues_existing_track_through_occlusion():
     assert r2[0].track_id == r1[0].track_id
 
 
+def test_stale_track_does_not_reattach_to_a_new_person_nearby():
+    """development_log.md 20번 버그 재현: 화면이 완전히 비었다가(전원 이탈) 한참 뒤
+    새로운(다른) 사람이 예전 위치 근처에 나타나면, 죽지 않고 남아있던 유령 트랙이
+    그 사람에게 잘못 재부착되면 안 된다 — 새 ID를 받아야 한다."""
+    tracker = ByteTracker(max_lost_frames=10)
+    r1 = tracker.update([_det(0, 0, 10, 20)])
+    original_id = r1[0].track_id
+
+    for _ in range(8):  # max_lost_frames(10) 직전까지 화면이 완전히 빔
+        tracker.update([])
+
+    # 원래 자리 근처지만 딱 겹치진 않는(IoU≈0.67) 새로운 사람 — 예전엔 0.3 기준을 가볍게 넘어 재부착됐음
+    r_new = tracker.update([_det(2, 0, 12, 20)])
+
+    assert r_new[0].track_id != original_id
+
+
+def test_stale_track_still_reattaches_if_almost_exactly_same_spot():
+    """오래 놓쳤어도, 새 탐지가 예전 위치와 거의 완전히 겹치면(진짜 그 사람이 잠깐
+    멈춰있었을 가능성이 높은 경우) 여전히 재부착되어야 한다 — 무조건 다 막는 게 아니라
+    "우연한 근접"만 걸러내는 것."""
+    tracker = ByteTracker(max_lost_frames=10)
+    r1 = tracker.update([_det(0, 0, 10, 20)])
+    original_id = r1[0].track_id
+
+    for _ in range(8):
+        tracker.update([])
+
+    r_new = tracker.update([_det(0, 0, 10, 20)])  # 완전히 동일한 위치(IoU=1.0)
+
+    assert r_new[0].track_id == original_id
+
+
 def test_size_similarity_breaks_ties_toward_matching_scale():
     """IoU만 보면 더 큰 박스(20x20)가 근소하게 앞서지만(0.25 > 0.22),
     원래 크기(10x10)와 비슷한 박스가 크기 유사도 가중치 덕분에 같은 트랙으로 이어져야 한다."""

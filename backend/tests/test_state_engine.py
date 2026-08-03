@@ -13,20 +13,41 @@ def test_no_fire_and_observed_is_inside_observed():
 
 def test_observed_soon_after_fire_is_inside_observed():
     fire_at = NOW - timedelta(minutes=1)
-    status = resolve_status("P01", is_currently_observed=True, now=NOW, fire_triggered_at=fire_at)
+    status = resolve_status(
+        "P01", is_currently_observed=True, now=NOW, fire_triggered_at=fire_at, first_seen_at=fire_at.isoformat()
+    )
     assert status.event == WorkerEvent.INSIDE_OBSERVED
 
 
 def test_observed_past_threshold_after_fire_is_prolonged_presence():
-    fire_at = NOW - timedelta(minutes=PROLONGED_PRESENCE_MINUTES + 1)
-    status = resolve_status("P01", is_currently_observed=True, now=NOW, fire_triggered_at=fire_at)
+    # 2026-08-03: PROLONGED_PRESENCE는 이제 화재 시각이 아니라 "이 작업자가 처음 감지된
+    # 시각"(first_seen_at) 기준으로 판정한다 — 방금 나타난 사람이 화재가 오래전이라는
+    # 이유만으로 즉시 장기체류경고가 되는 걸 막기 위함(state_engine.py 주석 참고).
+    fire_at = NOW - timedelta(minutes=PROLONGED_PRESENCE_MINUTES + 10)
+    first_seen_at = NOW - timedelta(minutes=PROLONGED_PRESENCE_MINUTES + 1)
+    status = resolve_status(
+        "P01", is_currently_observed=True, now=NOW, fire_triggered_at=fire_at, first_seen_at=first_seen_at.isoformat()
+    )
     assert status.event == WorkerEvent.PROLONGED_PRESENCE
 
 
 def test_exactly_at_threshold_is_prolonged_presence():
-    fire_at = NOW - timedelta(minutes=PROLONGED_PRESENCE_MINUTES)
-    status = resolve_status("P01", is_currently_observed=True, now=NOW, fire_triggered_at=fire_at)
+    fire_at = NOW - timedelta(minutes=PROLONGED_PRESENCE_MINUTES + 10)
+    first_seen_at = NOW - timedelta(minutes=PROLONGED_PRESENCE_MINUTES)
+    status = resolve_status(
+        "P01", is_currently_observed=True, now=NOW, fire_triggered_at=fire_at, first_seen_at=first_seen_at.isoformat()
+    )
     assert status.event == WorkerEvent.PROLONGED_PRESENCE
+
+
+def test_freshly_seen_worker_stays_inside_observed_even_long_after_fire():
+    # 실측으로 확인한 회귀 케이스: 화재가 오래전에 터졌어도, 방금 처음 나타난 사람은
+    # 자기 기준 관측 지속시간이 짧으므로 곧바로 PROLONGED_PRESENCE가 되면 안 된다.
+    fire_at = NOW - timedelta(minutes=PROLONGED_PRESENCE_MINUTES + 10)
+    status = resolve_status(
+        "P01", is_currently_observed=True, now=NOW, fire_triggered_at=fire_at, first_seen_at=NOW.isoformat()
+    )
+    assert status.event == WorkerEvent.INSIDE_OBSERVED
 
 
 def test_not_observed_is_tracking_lost_regardless_of_fire():

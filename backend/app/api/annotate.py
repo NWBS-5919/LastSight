@@ -16,7 +16,7 @@ router = APIRouter(prefix="/annotate", tags=["annotate"])
 
 
 @router.post("/upload")
-async def upload_and_annotate(file: UploadFile, sample_every: int = 4, max_frames: int = 80, confidence: float = 0.5) -> dict:
+async def upload_and_annotate(file: UploadFile, sample_every: int = 4, max_frames: int = 80, confidence: float | None = None) -> dict:
     suffix = Path(file.filename or "video.mp4").suffix or ".mp4"
     with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
         tmp.write(await file.read())

@@ -1,8 +1,15 @@
 """화재경보 자동 트리거.
 
-app.inference.fire_detector 의 탐지 결과가 일정 프레임 이상 연속으로 임계값을 넘으면
-FireAlert(source=AUTO_DETECTION)를 발생시킨다. 관리자가 수동으로 발생시키는 경로도
-그대로 유지한다(source=MANUAL) — 자동 탐지를 놓치는 경우의 안전망.
+app.inference.fire_detector 의 탐지 결과를 **5초 주기로 샘플링**하면서(호출 측 책임 —
+실 서비스는 이 간격으로 fire_detector.detect()를 불러 recent_detections에 쌓을 것),
+최근 샘플이 `consecutive_required`번 연속으로 임계값을 넘으면 FireAlert(source=AUTO_DETECTION)를
+발생시킨다. 관리자가 수동으로 발생시키는 경로도 그대로 유지한다(source=MANUAL) — 자동
+탐지를 놓치는 경우의 안전망.
+
+2026-08-02: 기존엔 "최근 5프레임 중 60% 이상 양성"이라는 윈도우+비율 규칙을 썼는데,
+5초 주기로 샘플링하는 전제라면 "최근 2개 샘플이 연속으로 양성"(=10초 확인)이라는 더 단순한
+규칙으로 충분하다고 판단해 교체했다 — 단발 오탐은 여전히 1개만으로는 안 걸리게 막고, 그 이상
+복잡한 비율 계산은 안 하는 쪽으로 단순화.
 """
 
 from datetime import UTC, datetime
@@ -17,28 +24,20 @@ def evaluate(
     *,
     zone_id: str | None = None,
     confidence_threshold: float = 0.6,
-    min_hit_ratio: float = 0.6,
-    min_window_size: int = 5,
+    consecutive_required: int = 2,
 ) -> FireAlert | None:
-    """최근 N프레임의 fire/smoke 탐지 이력을 보고 경보를 발생시킬지 판정.
+    """최근 샘플들을 보고 경보를 발생시킬지 판정.
 
-    단발성 오탐으로 경보가 울리지 않도록, 최근 프레임의 `min_hit_ratio` 이상에서
-    confidence_threshold를 넘는 탐지가 있어야 트리거한다 (기본: 최근 프레임의 60% 이상).
-    이 값들은 임의 기본값이므로 실제 데이터로 튜닝하고 experiments/logs/에 기록할 것 —
-    너무 낮으면 오탐(false alarm), 너무 높으면 놓침(False All-Clear 위험)으로 이어진다.
-
-    `min_window_size`: recent_detections가 아직 이 개수만큼 안 쌓였으면(카메라가 막
-    켜졌거나 화재경보 판정을 막 시작한 시점) 트리거하지 않는다. 이게 없으면 프레임
-    1~2개짜리 작은 표본에서 우연히 오탐 1건만 있어도 비율이 100%가 되어 바로 경보가
-    울리는 결함이 있었다(development_log.md 참고, 데모 시나리오에서 실측으로 발견).
+    recent_detections의 **마지막 consecutive_required개**가 전부 "양성"(confidence_threshold
+    이상인 탐지가 최소 1개 있음)이어야 트리거한다. 표본이 consecutive_required개보다 적으면
+    아직 판단하지 않는다(단발성 오탐 방지 — 1개 샘플만으로는 절대 안 울림).
     """
-    if len(recent_detections) < min_window_size:
+    if len(recent_detections) < consecutive_required:
         return None
 
-    hits = sum(
-        1 for frame_detections in recent_detections if any(d.confidence >= confidence_threshold for d in frame_detections)
-    )
-    if hits / len(recent_detections) < min_hit_ratio:
+    last_n = recent_detections[-consecutive_required:]
+    all_positive = all(any(d.confidence >= confidence_threshold for d in frame_detections) for frame_detections in last_n)
+    if not all_positive:
         return None
 
     return FireAlert(
@@ -46,10 +45,7 @@ def evaluate(
         zone_id=zone_id,
         triggered_at=datetime.now(UTC).isoformat(),
         source=AlarmSource.AUTO_DETECTION,
-        confidence=max(
-            (d.confidence for frame_detections in recent_detections for d in frame_detections),
-            default=None,
-        ),
+        confidence=max((d.confidence for frame_detections in last_n for d in frame_detections), default=None),
     )
 
 

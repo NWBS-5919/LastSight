@@ -90,18 +90,20 @@ def _adaptive_smoke_color(image: np.ndarray, mask: np.ndarray, rng: np.random.Ge
     """연기가 덮일 자리의 실제 배경 밝기를 측정해서, 항상 대비가 나도록 연기 색(회색조)을
     자동으로 정한다. 고정된 색상값(예: 회색=110)을 쓰면 특정 샘플 배경에서는 잘 보여도
     다른 배경(더 밝거나 어두운 장면)에서는 묻혀버리는 문제가 있어 — 데이터셋 전체 수천 장에
-    걸쳐 일반적으로 통하려면 이미지마다 배경에 맞춰 조정돼야 한다."""
+    걸쳐 일반적으로 통하려면 이미지마다 배경에 맞춰 조정돼야 한다.
+
+    검은/회색 연기만 표현한다 — 흰 연기(밝기 150 초과)는 만들지 않는다. 어두운 배경에서는
+    밝은(흰색에 가까운) 연기 대신 중간 톤 회색(90~150)까지만 올려 대비를 준다."""
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY).astype(np.float32)
     m = mask > 0.15
     local_bg = float(gray[m].mean()) if m.any() else float(gray.mean())
 
-    offset = rng.uniform(55, 95)
-    if local_bg >= 130:
-        target = np.clip(local_bg - offset, 15, 70)  # 밝은 배경 → 어두운 연기
-    elif local_bg <= 100:
-        target = np.clip(local_bg + offset, 160, 235)  # 어두운 배경 → 밝은 연기
+    if local_bg >= 110:
+        offset = rng.uniform(55, 95)
+        target = np.clip(local_bg - offset, 15, 70)  # 밝은 배경 → 검은 연기
     else:
-        target = np.clip(local_bg - offset, 15, 70) if rng.random() < 0.5 else np.clip(local_bg + offset, 160, 235)
+        offset = rng.uniform(35, 65)
+        target = np.clip(local_bg + offset, 90, 150)  # 어두운/중간 배경 → 회색 연기 (흰색 금지)
 
     jitter = rng.uniform(-5, 5, size=3)  # 완전한 무채색은 부자연스러우니 아주 약한 색 편차
     return np.clip(target + jitter, 0, 255).astype(np.float32)

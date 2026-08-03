@@ -5,15 +5,19 @@ import type { ScenarioSnapshot } from "../types";
 const EMPTY_STATE: ScenarioSnapshot = {
   running: false,
   frame_idx: -1,
+  frame_t: null,
   frame_image_url: null,
   frame_width: 1920,
   frame_height: 1080,
   fire_alert: null,
-  workers: [],
   event_feed: [],
   ppe_violations_today: 0,
   zone_person_counts: {},
   current_detections: [],
+  current_person_compliance: [],
+  situation_checks: [],
+  scenario_started_at: null,
+  ppe_violation_events: [],
 };
 
 export function useLiveState(): ScenarioSnapshot {

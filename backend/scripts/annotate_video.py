@@ -11,6 +11,7 @@
 
 import argparse
 import sys
+import time
 from pathlib import Path
 
 import cv2
@@ -43,8 +44,16 @@ def main() -> None:
     parser.add_argument("--video", required=True)
     parser.add_argument("--out", required=True, help="출력 영상 경로(.mp4)")
     parser.add_argument("--max-frames", type=int, default=None, help="처리할 최대 프레임 수(생략 시 전체)")
-    parser.add_argument("--sample-every", type=int, default=1, help="N프레임마다 1장 처리(기본 1=전부)")
+    parser.add_argument(
+        "--sample-every", type=int, default=1,
+        help="N프레임마다 모델을 1번 호출. 호출 사이 프레임에는 직전 탐지 결과를 그대로 그린다 "
+        "(출력 영상은 항상 원본 프레임을 전부 담아 매끄럽게 재생된다. 기본 1=매프레임 호출).",
+    )
     parser.add_argument("--confidence", type=float, default=0.5)
+    parser.add_argument(
+        "--request-interval-sec", type=float, default=0.0,
+        help="모델 호출 사이 대기 시간(초). ZERO는 공유 엔드포인트라 너무 자주 부르면 429(rate limit)가 난다.",
+    )
     args = parser.parse_args()
 
     cap = cv2.VideoCapture(args.video)
@@ -53,34 +62,40 @@ def main() -> None:
 
     src_fps = cap.get(cv2.CAP_PROP_FPS) or 15.0
     w, h = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    out_fps = max(1.0, src_fps / args.sample_every)
 
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    writer = cv2.VideoWriter(str(out_path), cv2.VideoWriter_fourcc(*"mp4v"), out_fps, (w, h))
+    # 모델 호출은 sample_every프레임마다 하지만, 출력 영상엔 원본 프레임을 전부 그대로
+    # 담는다 — 호출 사이 프레임은 직전 탐지 결과를 그대로 그려서 재생이 끊기지 않게 한다.
+    writer = cv2.VideoWriter(str(out_path), cv2.VideoWriter_fourcc(*"mp4v"), src_fps, (w, h))
 
     class_counts: dict[str, int] = {}
     frame_idx = 0
     written = 0
+    detect_calls = 0
+    last_dets: list = []
     while True:
         ok, frame = cap.read()
         if not ok:
             break
         if frame_idx % args.sample_every == 0:
-            dets = detector.detect(frame, confidence_threshold=args.confidence)
-            for d in dets:
+            if detect_calls > 0 and args.request_interval_sec > 0:
+                time.sleep(args.request_interval_sec)
+            last_dets = detector.detect(frame, confidence_threshold=args.confidence)
+            detect_calls += 1
+            for d in last_dets:
                 class_counts[d.object_class.value] = class_counts.get(d.object_class.value, 0) + 1
-            draw_detections(frame, dets)
-            writer.write(frame)
-            written += 1
-            print(f"[{written}] 원본 프레임 {frame_idx} 처리 — 탐지 {len(dets)}건")
-            if args.max_frames and written >= args.max_frames:
-                break
+            print(f"[모델호출 {detect_calls}] 원본 프레임 {frame_idx} — 탐지 {len(last_dets)}건")
+        draw_detections(frame, last_dets)
+        writer.write(frame)
+        written += 1
+        if args.max_frames and written >= args.max_frames:
+            break
         frame_idx += 1
 
     cap.release()
     writer.release()
-    print(f"\n완료: {written}프레임 → {out_path}")
+    print(f"\n완료: {written}프레임({written / src_fps:.1f}초) → {out_path} (모델 호출 {detect_calls}회)")
     print("클래스별 탐지 총합:", class_counts)
 
 

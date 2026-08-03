@@ -28,7 +28,10 @@ from app.core.bdai_client import get_bdai_client
 logger = logging.getLogger(__name__)
 
 # 작업자가 화재경보 후 오래 관측될 때 확인하고 싶은 우려 상황들.
-PROLONGED_PRESENCE_PROMPTS = ["쓰러진 사람", "바닥에 누워있는 사람", "연기에 둘러싸인 사람"]
+# 2026-08-02: "바닥에 누워있는 사람"은 "쓰러진 사람"과 사실상 같은 모습이라(ZERO 입장에서도
+# 거의 항상 같이 걸리거나 같이 안 걸림) 중복이었다 — 구역별 집계 로그(probe_zone_situation)의
+# 카테고리 예시(쓰러짐/연기에 갇힘 2종)에 맞춰 정리했다.
+PROLONGED_PRESENCE_PROMPTS = ["쓰러진 사람", "연기에 둘러싸인 사람"]
 
 # 관리구역 종류별로 확인하고 싶은 우려 상황들 (같은 변화감지 결과라도 종류에 따라 원인 문구가 다름).
 CLEARANCE_ZONE_PROMPTS: dict[str, list[str]] = {
@@ -36,6 +39,38 @@ CLEARANCE_ZONE_PROMPTS: dict[str, list[str]] = {
     "electrical_panel": ["가려진 전기패널", "전기패널 앞에 쌓인 물건"],
     "emergency_exit": ["막힌 비상구", "비상구 앞에 쌓인 물건", "닫힌 문"],
 }
+
+# ZERO는 한글 프롬프트를 사실상 인식하지 못한다(2026-08-02 실측: LastSight_Demo.mp4 프레임에서
+# "사람"/"쓰러진 사람"은 항상 0건인데 "person"/"fallen person"은 정상 인식 — 어휘가 영어
+# 위주). 그래서 위 한글 문구(카테고리명, CLAUDE.md 4-3에 정의된 고정 값)는 API·로그에 그대로
+# 쓰되, ZERO에 실제로 보내는 프롬프트만 검증된 영어로 바꿔치기하고 결과를 다시 한글로 매핑한다.
+# "쓰러진 사람"/"person"류는 실측 확인(0.4~0.58), 관리구역 문구는 같은 전략으로 번역만 하고
+# 이 데모 영상엔 해당 장면이 없어 아직 실측 검증은 못 했다 — 실제 사용 전 스팟체크 권장.
+_KOREAN_TO_ZERO_PROMPT: dict[str, str] = {
+    "쓰러진 사람": "fallen person",
+    "연기에 둘러싸인 사람": "distressed person in smoke",
+    "소화기를 가리는 박스": "boxes blocking a fire extinguisher",
+    "쌓여있는 적재물": "stacked pallets blocking access",
+    "소화기 앞을 막은 물건": "object blocking a fire extinguisher",
+    "가려진 전기패널": "obstructed electrical panel",
+    "전기패널 앞에 쌓인 물건": "boxes stacked in front of an electrical panel",
+    "막힌 비상구": "blocked emergency exit",
+    "비상구 앞에 쌓인 물건": "boxes blocking an emergency exit",
+    "닫힌 문": "closed door",
+}
+
+
+def _to_zero_prompts(korean_prompts: list[str]) -> tuple[list[str], dict[str, str]]:
+    """한글 우려 문구 목록을 ZERO가 인식하는 영어 프롬프트로 바꾼다.
+
+    반환값: (ZERO에 보낼 영어 프롬프트 목록, {영어 응답 class_name: 원래 한글 문구} 역매핑).
+    매핑에 없는 문구는 번역 없이 그대로 보낸다(새 문구 추가 시 매핑 누락돼도 조용히 깨지지
+    않고 예전처럼 동작 — 다만 그 경우 한글이라 다시 0건이 나올 수 있다는 점을 감안할 것).
+    """
+    english = [_KOREAN_TO_ZERO_PROMPT.get(p, p) for p in korean_prompts]
+    reverse = {en: ko for ko, en in zip(korean_prompts, english)}
+    return english, reverse
+
 
 _DEFAULT_CONFIDENCE = 0.35
 
@@ -54,19 +89,100 @@ def probe_situation(frame: np.ndarray, concern_prompts: list[str], *, confidence
     정보일 뿐, ZERO가 못 찾았다고 실제로 없다는 뜻은 아니기 때문). 호출 자체가 실패해도
     None을 반환하고 예외를 밖으로 던지지 않는다(호출부 파이프라인을 막지 않기 위함).
     """
+    zero_prompts, reverse = _to_zero_prompts(concern_prompts)
     try:
         client = get_bdai_client()
         result = client.foundation.predict(
             "zero",
             image={"image_b64": _encode_frame(frame)},
-            text_prompts=concern_prompts,
+            text_prompts=zero_prompts,
             confidence=confidence,
         )
     except Exception:
         logger.warning("situation_probe: ZERO 호출 실패", exc_info=True)
         return None
 
-    hit_labels = sorted({p.class_name for p in result.predictions if p.class_name in concern_prompts})
+    hit_labels = sorted({reverse[p.class_name] for p in result.predictions if p.class_name in reverse})
     if not hit_labels:
         return None
     return "2차 확인(ZERO) 결과 우려 요소 발견: " + ", ".join(hit_labels)
+
+
+BBox = tuple[float, float, float, float]
+
+STAY_CATEGORY = "체류중"  # ZERO가 찾은 어떤 우려 카테고리에도 안 걸린 사람의 기본 분류
+_DEFAULT_MATCH_DISTANCE_PX = 150.0  # ZERO가 찾은 박스를 이 거리(픽셀) 안의 가장 가까운 추적 인원에만 매칭
+
+
+def probe_zone_situation(
+    frame: np.ndarray,
+    workers_by_zone: dict[str, list[tuple[str, BBox]]],
+    *,
+    prompts: list[str] | None = None,
+    confidence: float = _DEFAULT_CONFIDENCE,
+    match_distance_px: float = _DEFAULT_MATCH_DISTANCE_PX,
+) -> tuple[dict[str, dict[str, int]], dict[str, str]]:
+    """프레임 전체를 ZERO에 한 번만 물어, 찾은 우려 상황 박스를 **그 순간 추적 중인 사람들과
+    위치(중심점 거리)로 매칭**해서 구역별로 정확히 집계한다 — "쓰러진 사람" 박스가 우리가
+    이미 추적하는 몇 번째 사람인지 코드로 알 방법이 없다는 문제를, 위치 매칭으로 해결한다.
+
+    workers_by_zone: {zone_id: [(track_id, bbox_xyxy), ...]} — 지금 이 프레임에 실제로
+    보이는 사람만 넘길 것(tracking_lost는 애초에 bbox가 없으므로 자연히 제외됨).
+
+    반환값:
+      - breakdown: {zone_id: {"체류중": N, "쓰러진 사람": M, ...}} — 항상
+        sum(breakdown[zone].values()) == len(workers_by_zone[zone])가 성립한다
+        (매칭 안 된 사람은 전부 STAY_CATEGORY로 남기 때문).
+      - matched_category: {track_id: category} — 호출부가 각 작업자의 situation_note를
+        채우는 데 쓴다(zone_situation_log와 개인별 situation_note를 같은 결과로 동기화).
+
+    ZERO 호출이 실패해도 예외를 던지지 않는다 — 이 경우 전원 STAY_CATEGORY로만 채워진
+    breakdown을 반환한다(장기체류 집계 로그 자체는 계속 남겨야 하므로, situation_probe
+    실패가 로그 생성 자체를 막으면 안 된다).
+    """
+    prompts = prompts or PROLONGED_PRESENCE_PROMPTS
+
+    breakdown: dict[str, dict[str, int]] = {zone_id: {STAY_CATEGORY: len(members)} for zone_id, members in workers_by_zone.items()}
+    matched_category: dict[str, str] = {}
+
+    all_workers = [(zone_id, tid, bbox) for zone_id, members in workers_by_zone.items() for tid, bbox in members]
+    if not all_workers:
+        return breakdown, matched_category
+
+    zero_prompts, reverse = _to_zero_prompts(prompts)
+    try:
+        client = get_bdai_client()
+        result = client.foundation.predict(
+            "zero",
+            image={"image_b64": _encode_frame(frame)},
+            text_prompts=zero_prompts,
+            confidence=confidence,
+        )
+    except Exception:
+        logger.warning("situation_probe: 구역 집계용 ZERO 호출 실패", exc_info=True)
+        return breakdown, matched_category
+
+    for pred in result.predictions:
+        korean_label = reverse.get(pred.class_name)
+        if korean_label is None or pred.geometry.type != "bbox":
+            continue
+        px, py = pred.geometry.x + pred.geometry.w / 2, pred.geometry.y + pred.geometry.h / 2
+
+        best: tuple[str, str] | None = None
+        best_dist = match_distance_px
+        for zone_id, tid, bbox in all_workers:
+            if tid in matched_category:
+                continue  # 이미 다른 카테고리로 확정된 사람은 다시 매칭하지 않음(중복 방지)
+            cx, cy = (bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2
+            dist = ((cx - px) ** 2 + (cy - py) ** 2) ** 0.5
+            if dist < best_dist:
+                best_dist = dist
+                best = (zone_id, tid)
+
+        if best is not None:
+            zone_id, tid = best
+            breakdown[zone_id][STAY_CATEGORY] -= 1
+            breakdown[zone_id][korean_label] = breakdown[zone_id].get(korean_label, 0) + 1
+            matched_category[tid] = korean_label
+
+    return breakdown, matched_category

@@ -17,6 +17,7 @@ ByteTrack 핵심 아이디어:
 병합하는 로직을 넣지 말 것. ID 유지/전환은 이 파일의 위치 기반(IoU) 판단에만 맡긴다.
 """
 
+import math
 from dataclasses import dataclass, field
 
 from app.inference.detector import Detection
@@ -84,6 +85,9 @@ class TrackedObject:
     detection: Detection
 
 
+_STALE_IOU_CAP = 0.95  # 오래 놓친 트랙이 재매칭되려면 요구되는 IoU의 상한(사실상 재사용 불가 수준)
+
+
 @dataclass
 class ByteTracker:
     iou_threshold: float = 0.3
@@ -101,6 +105,24 @@ class ByteTracker:
         self._next_id += 1
         return track_id
 
+    def _required_iou(self, track: _Track) -> float:
+        """트랙이 놓친 지 오래될수록 재매칭에 필요한 IoU를 더 엄격하게 요구한다.
+
+        수정 전에는 놓친 지 1프레임이든 max_lost_frames 직전이든 항상 같은 느슨한
+        기준(iou_threshold)을 썼다 — 그래서 화면이 완전히 비었다가(전원 화면 이탈)
+        한참 뒤 전혀 다른 새 사람이 우연히 비슷한 위치에 나타나면, 죽지 않고 남아있던
+        옛 트랙(유령 트랙)이 그 새 사람에게 잘못 재부착되는 버그가 있었다
+        (development_log.md 20번 참고, 재현 테스트는 test_byte_track.py 참고).
+
+        놓친 지 얼마 안 된 트랙(짧은 가려짐)은 기존처럼 관대하게 허용하되, max_lost_frames에
+        가까워질수록 요구 IoU를 제곱으로 급격히 끌어올려 사실상 "완전히 같은 자리에 그대로
+        있는 경우"만 재매칭되게 한다 — 우연히 근처에 나타난 다른 사람은 걸러지고, 짧게
+        가려졌다 돌아오는 정상 케이스는 그대로 통과한다."""
+        if self.max_lost_frames <= 0:
+            return self.iou_threshold
+        ratio = min(track.time_since_update / self.max_lost_frames, 1.0)
+        return self.iou_threshold + (ratio**2) * (_STALE_IOU_CAP - self.iou_threshold)
+
     def _greedy_match(self, track_ids: list[str], detections: list[Detection]) -> tuple[list[tuple[str, int]], list[str], list[int]]:
         """트랙의 예측 위치와 탐지들 사이 IoU 기준 그리디 매칭.
 
@@ -110,14 +132,17 @@ class ByteTracker:
         후보로 남는 기준(threshold)은 IoU 하나뿐이지만, 그중 어느 후보를 먼저 확정할지
         정하는 순위는 IoU와 박스 크기 유사도를 함께 본다 — 두 사람이 스쳐 지나가며
         겹칠 때, 위치만으로는 헷갈려도 카메라 거리가 다르면 박스 크기가 달라서
-        잘못된 매칭을 먼저 확정하는 걸 줄여준다(메인 기준은 여전히 위치).
+        잘못된 매칭을 먼저 확정하는 걸 줄여준다(메인 기준은 여전히 위치). 필요 IoU 자체도
+        트랙별로 다르다(_required_iou) — 오래 놓친 트랙일수록 더 엄격하게 본다.
         """
         candidates = []
         for tid in track_ids:
-            predicted = self._tracks[tid].predict()
+            track = self._tracks[tid]
+            predicted = track.predict()
+            required = self._required_iou(track)
             for di, det in enumerate(detections):
                 iou = _iou(predicted, det.bbox_xyxy)
-                if iou >= self.iou_threshold:
+                if iou >= required:
                     size_sim = _size_similarity(predicted, det.bbox_xyxy)
                     score = (1 - self.size_similarity_weight) * iou + self.size_similarity_weight * size_sim
                     candidates.append((score, tid, di))
@@ -127,6 +152,62 @@ class ByteTracker:
         matched_dets: set[int] = set()
         matches: list[tuple[str, int]] = []
         for _iou_val, tid, di in candidates:
+            if tid in matched_tracks or di in matched_dets:
+                continue
+            matches.append((tid, di))
+            matched_tracks.add(tid)
+            matched_dets.add(di)
+
+        unmatched_tracks = [t for t in track_ids if t not in matched_tracks]
+        unmatched_dets = [i for i in range(len(detections)) if i not in matched_dets]
+        return matches, unmatched_tracks, unmatched_dets
+
+    def _required_radius(self, track: _Track) -> float:
+        """거리 기반 폴백 매칭(_distance_fallback_match)에서 쓰는 반경(px).
+
+        2026-08-03 실측: 처음엔 _required_iou처럼 time_since_update에 비례해 반경을
+        선형으로 줄이기만 했는데, 유령 트랙 재부착 방지 테스트(놓친 지 8/10프레임, 겨우
+        2px 떨어진 "다른 사람")가 깨졌다 — 8/10 지점에서도 반경이 12px나 남아있어서
+        재부착됐다. 이 폴백의 목적은 "뛰는 사람처럼 바로 직전 프레임까지는 잘 이어지다가
+        이번 프레임 하나에서만 IoU가 어긋난 경우"를 구제하는 것이지, 여러 프레임째 놓친
+        트랙을 되살리는 게 아니다 — 그건 여전히 _required_iou의 몫이다. 그래서 아예
+        time_since_update가 0(=바로 직전 프레임까지 정상 매칭됨)일 때만 반경을 주고,
+        한 번이라도 놓친 트랙은 0을 반환해 이 폴백 대상에서 완전히 제외한다."""
+        if track.time_since_update > 0:
+            return 0.0
+        return max(60.0, (track.bbox[2] - track.bbox[0]) * 1.5)
+
+    def _distance_fallback_match(
+        self, track_ids: list[str], detections: list[Detection]
+    ) -> tuple[list[tuple[str, int]], list[str], list[int]]:
+        """IoU 매칭에 실패한 트랙을 위한 2차 매칭 — 겹침 대신 중심점 거리로 이어붙인다.
+
+        2026-08-03: 화재 이후 사람이 뛰어서 대피하면 1프레임(샘플 간격) 사이 이동 거리가
+        커서 예측 박스와 실제 박스가 거의 안 겹친다(IoU≈0) — 그러면 _greedy_match가 실패해
+        같은 사람인데도 매번 새 track_id가 발급됐다(실측: idx=61~87 26프레임에 T0001~T0020,
+        20개 ID). 얼굴·복장 등 외형은 전혀 안 쓰고(CLAUDE.md 2번 원칙), 순수하게 "이 사람이
+        직전에 있던 자리에서 그럴듯한 거리만큼만 움직였는가"만 기하학적으로 판단한다 —
+        이 세션에서 PPE 판정 스트림 매칭에 쓴 것과 같은 접근이다. 예측 위치가 아니라
+        마지막으로 실제 관측된 위치(track.bbox) 기준으로 재는데, 급격한 방향 전환·가속에서는
+        등속 예측보다 마지막 실측 위치가 더 안정적인 기준이기 때문이다."""
+        candidates = []
+        for tid in track_ids:
+            track = self._tracks[tid]
+            radius = self._required_radius(track)
+            if radius <= 0:
+                continue
+            last_center = _center(track.bbox)
+            for di, det in enumerate(detections):
+                dist = math.dist(last_center, _center(det.bbox_xyxy))
+                if dist <= radius:
+                    score = 1.0 - dist / radius
+                    candidates.append((score, tid, di))
+        candidates.sort(key=lambda c: c[0], reverse=True)
+
+        matched_tracks: set[str] = set()
+        matched_dets: set[int] = set()
+        matches: list[tuple[str, int]] = []
+        for _score, tid, di in candidates:
             if tid in matched_tracks or di in matched_dets:
                 continue
             matches.append((tid, di))
@@ -148,11 +229,20 @@ class ByteTracker:
         for tid, di in matches1:
             self._tracks[tid].update_with(high[di].bbox_xyxy)
 
-        matches2, unmatched_tracks2, _unmatched_low = self._greedy_match(unmatched_tracks1, low)
+        matches2, unmatched_tracks2, unmatched_low = self._greedy_match(unmatched_tracks1, low)
         for tid, di in matches2:
             self._tracks[tid].update_with(low[di].bbox_xyxy)
 
-        for tid in unmatched_tracks2:
+        # IoU로 못 이은 트랙에 한해, 남은 탐지(고/저신뢰 모두) 중 거리로 이어붙일 수 있는지
+        # 마지막으로 시도한다 — 뛰는 사람처럼 겹침이 거의 없는 경우를 구제한다.
+        remaining = [("high", i, high[i]) for i in unmatched_high] + [("low", i, low[i]) for i in unmatched_low]
+        matches3, unmatched_tracks3, unmatched_remaining_idx = self._distance_fallback_match(
+            unmatched_tracks2, [d for _src, _i, d in remaining]
+        )
+        for tid, ri in matches3:
+            self._tracks[tid].update_with(remaining[ri][2].bbox_xyxy)
+
+        for tid in unmatched_tracks3:
             self._tracks[tid].time_since_update += 1
 
         expired = [tid for tid, t in self._tracks.items() if t.time_since_update > self.max_lost_frames]
@@ -161,6 +251,11 @@ class ByteTracker:
 
         results: list[TrackedObject] = [TrackedObject(track_id=tid, detection=high[di]) for tid, di in matches1]
         results += [TrackedObject(track_id=tid, detection=low[di]) for tid, di in matches2]
+        results += [TrackedObject(track_id=tid, detection=remaining[ri][2]) for tid, ri in matches3]
+
+        # 거리 폴백까지 실패한 고신뢰 탐지만 새 트랙 후보 — 저신뢰 미매칭 탐지로는 여전히
+        # 새 ID를 만들지 않는다(오탐이 새 사람으로 둔갑하는 걸 방지, 기존 원칙 유지).
+        unmatched_high = [remaining[ri][1] for ri in unmatched_remaining_idx if remaining[ri][0] == "high"]
 
         for di in unmatched_high:
             new_id = self._new_id()

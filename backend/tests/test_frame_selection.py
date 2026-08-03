@@ -30,7 +30,7 @@ def test_prefers_sharper_frame(tmp_path):
 
     bbox = (0, 0, 200, 200)  # 정사각형이라 두 후보 다 occlusion 점수는 동일
     result = select_reference_frame([(sharp_path, _det(bbox)), (flat_path, _det(bbox))])
-    assert result == sharp_path
+    assert result == (sharp_path, bbox)
 
 
 def test_prefers_typical_aspect_ratio_when_sharpness_equal(tmp_path):
@@ -44,7 +44,7 @@ def test_prefers_typical_aspect_ratio_when_sharpness_equal(tmp_path):
     result = select_reference_frame(
         [(typical_path, _det(typical_bbox)), (odd_path, _det(odd_bbox))]
     )
-    assert result == typical_path
+    assert result == (typical_path, typical_bbox)
 
 
 def test_prefers_larger_box_when_others_equal(tmp_path):
@@ -57,7 +57,7 @@ def test_prefers_larger_box_when_others_equal(tmp_path):
     result = select_reference_frame(
         [(small_path, _det(small_bbox)), (large_path, _det(large_bbox))]
     )
-    assert result == large_path
+    assert result == (large_path, large_bbox)
 
 
 def test_empty_candidates_returns_none():
@@ -71,4 +71,4 @@ def test_missing_file_does_not_crash_and_loses_to_real_file(tmp_path):
     result = select_reference_frame(
         [("/no/such/file.jpg", _det(bbox)), (real_path, _det(bbox))]
     )
-    assert result == real_path
+    assert result == (real_path, bbox)

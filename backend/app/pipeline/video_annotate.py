@@ -40,7 +40,7 @@ def annotate_video(
     *,
     sample_every: int = 4,
     max_frames: int = 80,
-    confidence: float = 0.5,
+    confidence: float | None = None,
 ) -> dict:
     """video_path를 처리해 프레임마다 bbox를 그린 jpg를 저장하고, 프레임 URL 목록 등을 반환."""
     job_id = uuid.uuid4().hex[:12]

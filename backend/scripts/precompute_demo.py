@@ -46,6 +46,7 @@ import argparse
 import json
 import re
 import sys
+import time
 from pathlib import Path
 
 import cv2
@@ -127,6 +128,12 @@ def main() -> None:
         help="fire/smoke 탐지 신뢰도 임계값. optimal_confidence(0.44)는 실제로는 배경 오탐이 많아 데모 기본값을 0.9로 올렸다(development_log.md 참고)",
     )
     parser.add_argument(
+        "--request-interval-sec",
+        type=float,
+        default=1.5,
+        help="ZERO 호출 사이 대기 시간(초). 프레임당 person+fire 2회 호출이 곧바로 이어지면 RATE_LIMITED(429)가 난다.",
+    )
+    parser.add_argument(
         "--skip-fire",
         action="store_true",
         help="fire/smoke 탐지 자체를 생략(person/helmet/vest 추적만 확인할 때). 배경 자체가 화재/연기로 오탐되는 영상을 화재 시나리오 없이 쓸 때 사용",
@@ -161,10 +168,24 @@ def main() -> None:
         t = round(sample_idx * args.demo_interval_sec, 2)
         print(f"[{sample_idx:03d}] 원본 프레임 {src_label} (demo t={t}s) 처리 중...")
 
+        # ZERO는 공유 엔드포인트라 프레임당 2회(person+fire) 호출을 곧바로 이어붙이면
+        # RATE_LIMITED(429)가 난다(실측, development_log.md 참고) — 프레임 사이에 짧게 쉬어준다.
+        if sample_idx > 0:
+            time.sleep(args.request_interval_sec)
+
         # 1) 사람/헬멧/조끼는 항상 원본(연기 없는) 프레임 기준으로 탐지 — 추적 안정성 확보
         person_dets = detector.detect(frame)
 
+        # 1-1) head/upper_body — helmet/vest를 못 찾았을 때 "머리/상체는 보이는데 안전장비가
+        # 없다"를 확인하는 폴백 신호(app.rules.ppe_compliance). "safety helmet"과 같은
+        # 호출에 섞으면 인식률이 떨어져(실측) 별도 호출로 분리돼 있다 — 여기서도 한 번 쉬어준다.
+        time.sleep(args.request_interval_sec)
+        head_boxes, upper_body_boxes = detector.detect_head_upper_body(frame)
+
         # 2) 화면에 보여줄 이미지 + fire/smoke 탐지는 연기를 합성한 프레임 기준
+        # 프레임 사이(위의 sleep)뿐 아니라 같은 프레임 안에서 person→fire 호출도 곧바로
+        # 이어붙이면 RATE_LIMITED(429)가 난다(실측) — 여기서도 한 번 더 쉬어준다.
+        time.sleep(args.request_interval_sec)
         display_frame = frame
         smoke_injected = False if args.skip_fire else sample_idx >= smoke_start
         if args.skip_fire:
@@ -178,6 +199,8 @@ def main() -> None:
             # 합리적이다 — 탐지 결과 자체를 조작하는 게 아니라 데모에 쓸 장면을 고르는 것).
             best_frame, best_dets, best_conf = display_frame, [], -1.0
             for seed_offset in range(6):
+                if seed_offset > 0:
+                    time.sleep(args.request_interval_sec)
                 candidate = add_synthetic_smoke(
                     frame, np.random.default_rng(1000 * sample_idx + seed_offset), coverage=coverage, boxes=None
                 )
@@ -207,6 +230,8 @@ def main() -> None:
                     {"object_class": d.object_class.value, "confidence": d.confidence, "bbox_xyxy": list(d.bbox_xyxy)}
                     for d in person_dets
                 ],
+                "head_boxes": [list(b) for b in head_boxes],
+                "upper_body_boxes": [list(b) for b in upper_body_boxes],
                 "fire_detections": [
                     {"object_class": d.object_class.value, "confidence": d.confidence, "bbox_xyxy": list(d.bbox_xyxy)}
                     for d in fire_dets

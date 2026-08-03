@@ -15,6 +15,7 @@ dependencies:
       - python-dotenv
       - websockets
       - superb-ai         # BDAI(Superb AI) Python SDK — bdai_pipeline/ 스크립트에서 사용
+      - openai            # BDAI의 Gemini 게이트웨이(OpenAI 호환) 호출용 — 브리핑 요약(app/inference/briefing.py)
       - pytest
       - httpx             # backend 테스트(TestClient)에서 사용
       # 아래는 탐지·추적 모델을 확정하면 추가:

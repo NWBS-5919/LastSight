@@ -4,9 +4,10 @@
 BDAI 플랫폼 스키마, 라벨링, 규칙 엔진, 대시보드 표시 문구가 전부 이 정의를 기준으로 맞춰져야 함.
 """
 
+import uuid
 from enum import StrEnum
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ObjectClass(StrEnum):
@@ -73,10 +74,12 @@ class WorkerStatus(BaseModel):
 
     track_id: str
     event: WorkerEvent
+    first_seen_at: str | None = None  # ISO8601 — 이 track_id가 처음 감지된 시각(체류시간 계산용)
     last_zone: str | None = None
     last_seen_at: str | None = None  # ISO8601
     last_frame_path: str | None = None
     reference_frame_path: str | None = None
+    reference_bbox_xyxy: tuple[float, float, float, float] | None = None  # reference_frame_path 이미지 안에서 이 사람 위치 — 한 프레임에 여러 명이 있을 때 누구인지 표시하는 용도
     helmet_color: HelmetColor | None = None
     vest_color: VestColor | None = None
     top_color: str | None = None
@@ -84,6 +87,22 @@ class WorkerStatus(BaseModel):
     confidence: float | None = None  # 마지막 관측 시점 person 탐지 신뢰도(0~1) — 추정치임을 드러내기 위한 보조 정보
     situation_note: str | None = None  # PROLONGED_PRESENCE 전환 시 ZERO 추가 확인 결과로 채워지는 짧은 상황 설명 (app/rules/situation_probe.py)
     priority_score: float | None = None  # 확인 우선순위 점수(0~100) — app/rules/triage.py, 요청 시점에 계산해 채움(저장값 아님)
+    current_bbox_xyxy: tuple[float, float, float, float] | None = None  # 이번 프레임에 실제로 보일 때만 채워짐 — 프론트가 관측중(초록)/장기체류(빨강) 실시간 박스를 그리는 용도
+
+
+class PersonComplianceBox(BaseModel):
+    """평상시(추적 없음) 화면에서 사람 bbox 위에 "헬멧 착용"/"헬멧 미착용" 같은 라벨을
+    실시간으로 그리기 위한 이번 프레임 스냅샷 1건. 화재 이후의 WorkerStatus와 달리
+    track_id가 없다 — 평상시엔 추적 자체를 안 쓰므로(PpeViolationLogEntry와 동일한 이유,
+    development_log.md 43·46번 참고), 매 프레임 새로 계산해서 그 순간만 보여주고 누적하지
+    않는다. 위반이 새로 감지된 순간만 별도로 남기는 PpeViolationLogEntry(누적 로그)와
+    역할이 다르다 — 이건 "지금 이 사람이 착용했는지" 실시간 표시용이다."""
+
+    bbox_xyxy: tuple[float, float, float, float]
+    zone: str | None = None
+    helmet: str  # "worn" | "not_worn" | "unknown" (app/rules/ppe_compliance.ComplianceState 값 그대로)
+    vest: str
+    confidence: float | None = None
 
 
 class WorkerEventLogEntry(BaseModel):
@@ -106,20 +125,53 @@ class WorkerEventLogEntry(BaseModel):
 
 
 class PpeViolationLogEntry(BaseModel):
-    """PPE 미착용이 새로 감지된 순간 1건. 이미 미착용 상태가 계속되는 동안은 매 프레임
-    남기지 않고, "착용 → 미착용"으로 바뀐 순간에만 기록한다(worker_log와 같은 원칙).
+    """PPE 미착용이 새로 감지된 순간 1건. 이미 미착용 상태가 계속되는 동안은 다시
+    기록하지 않고, 새로운 미착용 상황(직전과 위치·시간이 다른)일 때만 기록한다.
 
-    추적 ID 연속성을 신뢰하지 않는다는 전제로 설계했다 — 같은 사람이 사라졌다 다시 나타나
-    새 ID를 받아도 그냥 새 위반 건으로 다시 기록될 뿐이며, 그게 의도된 동작이다. 관리자가
-    frame_path의 사진을 보고 "혹시 아까 그 사람인가?"를 직접 판단하면 된다."""
+    2026-08-02: 평상시엔 추적(ByteTracker) 자체를 안 쓰기로 했다 — 사람이 화면을
+    들락날락할 때마다 추적 ID가 계속 새로 매겨져서(development_log.md 43번) ID 기반
+    집계가 의미가 없었기 때문. 그래서 이 로그도 track_id가 아니라 **구역+시간+위치**로
+    "같은 위반이 계속 이어지는 중인지"를 판단한다(app/rules/ppe_violation_log.py의
+    스페이셜 dedup) — 사람을 특정하지 않고, 위반 "사건"만 기록한다는 관점.
 
-    track_id: str
-    violation: str  # "helmet" | "vest" — 어떤 장비가 미착용인지
+    한 사람이 헬멧·조끼를 동시에 미착용이면 violations에 둘 다 담겨 한 줄로 기록된다
+    (예: ["helmet", "vest"] → 화면엔 "헬멧, 조끼 미착용"으로 조합해서 보여줄 것).
+
+    2026-08-03 추가: 관리자가 카드를 열어 AI 판정(helmet_state/vest_state)을 직접 검토·
+    수정할 수 있게 됐다 — 수정 결과는 reviewed_* 필드에 별도로 남기고 원본 AI 판정은
+    지우지 않는다(둘 다 착용으로 정정해도 "AI가 원래 뭐라고 봤는지"는 감사 추적으로 남음).
+    reviewed_at이 None이면 아직 아무도 검토하지 않은 상태."""
+
+    # 2026-08-03 정정: default_factory를 준 이유 — 이 필드를 추가하기 전부터 쌓여있던
+    # 로그 파일(id 없음)을 불러올 때 필수 필드 누락으로 검증 예외가 나면서 run_scenario()
+    # 태스크가 아무 로그도 없이 조용히 죽는 문제가 실측으로 확인됐다(예외를 아무도
+    # await/조회하지 않는 백그라운드 태스크라 콘솔에도 안 남았다). 기존 항목은 매번 새
+    # id를 받게 되지만(그 항목을 다시 검토·수정할 일은 없으므로 무해), 새로 생기는 항목은
+    # 어차피 생성 시점에 명시적으로 id를 넘겨준다(app/rules/ppe_violation_log.py).
+    id: str = Field(default_factory=lambda: uuid.uuid4().hex)  # 관리자가 이 항목을 특정해 검토(수정)할 때 쓰는 고유 식별자
+    violations: list[str]  # "helmet"/"vest" 중 이번에 미착용으로 감지된 항목들(1개 이상)
     zone: str | None = None
     at: str  # ISO8601
     frame_path: str | None = None
     bbox_xyxy: tuple[float, float, float, float] | None = None
     confidence: float | None = None
+    helmet_state: str | None = None  # AI 원판정: "worn"/"not_worn"/"unknown"
+    vest_state: str | None = None
+    reviewed_at: str | None = None  # 관리자가 검토를 제출한 시각(ISO8601) — None이면 미검토
+    reviewed_helmet: str | None = None  # 관리자가 최종 확정한 값 — None이면 AI 판정 그대로 유지
+    reviewed_vest: str | None = None
+
+
+class PpeDetectionSettings(BaseModel):
+    """카메라별로 헬멧/조끼 미착용 감지를 각각 켜고 끌 수 있는 설정.
+
+    예: 어떤 현장은 조끼 규정이 없어서 조끼 감지는 끄고 헬멧만 보고 싶을 수 있다.
+    꺼진 항목은 app/rules/ppe_compliance.py에서 아예 판정을 안 하고(UNKNOWN 취급),
+    위반 로그도 생기지 않는다."""
+
+    camera_id: str
+    detect_helmet: bool = True
+    detect_vest: bool = True
 
 
 class ClearanceZoneLogEntry(BaseModel):
@@ -134,11 +186,15 @@ class ClearanceZoneLogEntry(BaseModel):
 
 class IncidentTimelineEntry(BaseModel):
     """사고 리플레이 타임라인 한 줄 — 화재경보/작업자 상태변화/관리구역 상태변화/PPE
-    미착용을 한 종류(source)로 통합해 시간순으로 병합한 것. app/api/incidents.py에서 조립한다."""
+    미착용/구역별 상황집계를 한 종류(source)로 통합해 시간순으로 병합한 것.
+    app/api/incidents.py에서 조립한다.
+
+    track_id는 source="worker"(비상시에만 추적하므로 track_id가 있음)일 때만 채워진다 —
+    "ppe_violation"/"zone_situation"은 평상시·구역집계 성격상 특정 사람 ID를 안 쓴다."""
 
     at: str  # ISO8601
-    source: str  # "fire_alert" | "worker" | "clearance_zone" | "ppe_violation"
-    text: str  # 대시보드에 그대로 표시할 한 줄 설명
+    source: str  # "fire_alert" | "worker" | "clearance_zone" | "ppe_violation" | "zone_situation"
+    text: str  # 대시보드에 그대로 표시할 한 줄(또는 여러 줄) 설명
     track_id: str | None = None
     zone_id: str | None = None
     situation_note: str | None = None
@@ -159,6 +215,46 @@ class FireAlert(BaseModel):
     triggered_at: str  # ISO8601
     source: AlarmSource
     confidence: float | None = None  # source가 AUTO_DETECTION일 때 fire/smoke 탐지 신뢰도
+
+
+class ZoneSituationBox(BaseModel):
+    """구역 집계 캡처 사진(frame_path) 위에 그릴 사람 1명의 박스. category는 breakdown의
+    key와 같은 값을 쓴다("체류중"/"쓰러진 사람"/"연기에 둘러싸인 사람") — 그래서 로그를
+    열어봤을 때 사진 위에 "이 사람이 쓰러진 사람이다"처럼 카테고리별로 색을 다르게 그릴 수
+    있다. 개인 식별자(track_id)는 담지 않는다 — 이 로그는 "그 순간 전체 상황"을 남기는
+    용도이지 특정 개인을 추적하는 용도가 아니다."""
+
+    category: str
+    bbox_xyxy: tuple[float, float, float, float]
+
+
+class ZoneSituationEntry(BaseModel):
+    """구역 하나의 상황 집계 1건 — 그 구역에 지금 몇 명이 있고, 그중 몇 명이 어떤
+    우려 상황(situation_probe.PROLONGED_PRESENCE_PROMPTS)에 해당하는지.
+
+    breakdown의 key는 situation_probe의 프롬프트 문구를 그대로 쓰거나("쓰러진 사람" 등),
+    특별한 우려 신호가 없는 사람은 "체류중"으로 묶는다. total은 항상
+    sum(breakdown.values())와 같다 — ZERO가 찾은 박스를 그 구역에서 추적 중인 사람과
+    위치로 매칭해서 정확히 한 카테고리에만 속하도록 만들기 때문(app/inference/situation_probe.py
+    의 probe_zone_situation 참고). boxes는 breakdown과 같은 인원을 1명씩 박스로 풀어놓은
+    것이라 항상 len(boxes) == total이다 — 캡처 이미지(frame_path) 위에 카테고리별 박스를
+    그리는 데 쓴다."""
+
+    zone_id: str
+    total: int
+    breakdown: dict[str, int]  # 예: {"체류중": 1, "쓰러진 사람": 3, "연기에 둘러싸인 사람": 1}
+    boxes: list[ZoneSituationBox] = []
+
+
+class ZoneSituationLogEntry(BaseModel):
+    """장기체류(PROLONGED_PRESENCE) 전환이 하나라도 생길 때마다 그 순간 전체 구역을
+    다시 집계해서 남기는 로그 1건. 개인별 situation_note와 별개로, "지금 전체적으로
+    어떤 상황인지"를 관리자가 한눈에 보기 위한 것."""
+
+    camera_id: str
+    at: str  # ISO8601
+    zones: list[ZoneSituationEntry]
+    frame_path: str | None = None  # 이 집계에 쓰인 프레임 — 클릭하면 전체 장면 사진을 보여줌
 
 
 Point = tuple[float, float]
@@ -218,3 +314,19 @@ class ClearanceZoneStatus(BaseModel):
     last_checked_at: str | None = None  # ISO8601
     last_frame_path: str | None = None
     situation_note: str | None = None  # ABNORMAL 전환 시 ZERO 추가 확인 결과(app/rules/situation_probe.py)
+
+
+class SituationSummary(BaseModel):
+    """상황 타임라인의 "요약 브리핑" 버튼 결과 — 이 시점까지 시스템이 실제로 기록한
+    데이터(화재경보, 구역별 인원, 2차 확인 이력, PPE 위반)를 근거로 Gemini가 작성한 한국어
+    요약. 어디까지나 보조 정보이며(disclaimer), 절대 원칙(CLAUDE.md 2번)을 위반하는 문장이
+    나오지 않도록 프롬프트에서 강제한다 — 전원 안전/대피 완료 확정, 잔류인원 확정 금지.
+
+    2026-08-04: 문단 하나로 된 줄글은 관리자가 급하게 훑어보기 어렵다는 피드백으로,
+    한 줄 headline + 짧은 문장 여러 개(points)로 구조화해서 돌려준다 — 프론트엔드가
+    카드/불릿 형태로 그리기 쉽게."""
+
+    headline: str
+    points: list[str]
+    generated_at: str  # ISO8601
+    disclaimer: str = "이 요약은 AI가 자동 생성한 추정 정보이며, 관리자 판단을 대체하지 않습니다."

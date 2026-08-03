@@ -62,8 +62,12 @@ def _normalize(values: list[float]) -> list[float]:
     return [(v - lo) / (hi - lo) for v in values]
 
 
-def select_reference_frame(candidates: list[tuple[str, Detection]]) -> str | None:
-    """(frame_path, Detection) 후보 리스트 중 가장 적합한 frame_path를 반환. 후보 없으면 None."""
+def select_reference_frame(candidates: list[tuple[str, Detection]]) -> tuple[str, BBox] | None:
+    """(frame_path, Detection) 후보 리스트 중 가장 적합한 (frame_path, bbox_xyxy)를 반환.
+
+    bbox_xyxy를 같이 반환하는 이유: 참조 프레임엔 다른 사람이 같이 찍혀 있을 수 있어서,
+    프레임 경로만으로는 "이 카드가 누구를 가리키는지" 알 수 없다 — 호출부가 이 bbox로
+    빨간 박스를 그려 명확히 표시한다. 후보 없으면 None."""
     if not candidates:
         return None
 
@@ -90,4 +94,5 @@ def select_reference_frame(candidates: list[tuple[str, Detection]]) -> str | Non
             best_score = score
             best_index = i
 
-    return candidates[best_index][0]
+    best_path, best_det = candidates[best_index]
+    return best_path, best_det.bbox_xyxy

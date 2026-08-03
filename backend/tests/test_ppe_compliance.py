@@ -3,6 +3,31 @@ from app.rules.ppe_compliance import ComplianceState, evaluate_ppe_compliance
 PERSON = (100.0, 100.0, 200.0, 300.0)
 
 
+def test_detect_helmet_off_forces_unknown_even_with_clear_evidence():
+    head = (130.0, 100.0, 170.0, 140.0)
+    helmet_far = (100.0, 250.0, 140.0, 290.0)  # 명백히 미착용으로 보이는 배치
+    result = evaluate_ppe_compliance(PERSON, head_boxes=[head], helmet_boxes=[helmet_far], detect_helmet=False)
+    assert result.helmet == ComplianceState.UNKNOWN
+    assert result.helmet_iou is None
+
+
+def test_detect_vest_off_forces_unknown_even_with_no_vest_signal():
+    no_vest = (110.0, 150.0, 190.0, 280.0)
+    result = evaluate_ppe_compliance(PERSON, no_vest_boxes=[no_vest], detect_vest=False)
+    assert result.vest == ComplianceState.UNKNOWN
+
+
+def test_detect_toggles_are_independent():
+    head = (130.0, 100.0, 170.0, 140.0)
+    helmet = (128.0, 95.0, 172.0, 138.0)
+    no_vest = (110.0, 150.0, 190.0, 280.0)
+    result = evaluate_ppe_compliance(
+        PERSON, head_boxes=[head], helmet_boxes=[helmet], no_vest_boxes=[no_vest], detect_vest=False
+    )
+    assert result.helmet == ComplianceState.WORN  # 헬멧 감지는 여전히 켜져 있으므로 정상 판정
+    assert result.vest == ComplianceState.UNKNOWN  # 조끼 감지만 꺼짐
+
+
 def test_head_and_matching_helmet_is_worn():
     head = (130.0, 100.0, 170.0, 140.0)
     helmet = (128.0, 95.0, 172.0, 138.0)  # head와 크게 겹침

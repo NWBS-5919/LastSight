@@ -17,7 +17,11 @@ SuperB AI × BDAI 해커톤 — 산업안전·물류 트랙. 자세한 배경·�
 │   ├── exports/                # BDAI 스냅샷 익스포트 (git 추적 제외)
 │   ├── zone_maps/              # 카메라별 구역·관리구역(소화기/전기패널/비상구) 폴리곤 정의 및 기준사진(json)
 │   ├── fire_alerts/            # 카메라별 화재경보 발생 로그 (json)
-│   └── worker_logs/            # 작업자별 상태 변화 이벤트 로그 (json)
+│   ├── worker_logs/            # 작업자별 상태 변화 이벤트 로그 (json, 화재경보 이후에만 생성)
+│   ├── clearance_zone_logs/    # 관리구역 상태 변화 로그 (json)
+│   ├── ppe_settings/           # 카메라별 헬멧/조끼 감지 on/off 설정 (json)
+│   ├── ppe_violation_logs/     # 평상시 PPE 미착용 이벤트 로그 — 카메라당 파일 하나 (json)
+│   └── zone_situation_logs/    # 화재 후 구역별 상황 집계 로그 — 카메라당 파일 하나 (json)
 ├── experiments/logs/          # 실험 로그 (1~10차)
 └── scripts/                   # 잡다한 유틸 스크립트
 ```
