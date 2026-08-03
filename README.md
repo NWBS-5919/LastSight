@@ -28,11 +28,17 @@ SuperB AI × BDAI 해커톤 — 산업안전·물류 트랙. 자세한 배경·�
 
 ## 시작하기
 
+필요한 것: [conda](https://docs.conda.io/)(Miniconda로 충분), Node.js 20 이상. 저장소를 클론하면 데모에 필요한 것(사전계산된 프레임·시나리오 데이터)이 이미 다 들어있어서, 아래 순서만 따라 하면 별도 데이터 준비 없이 바로 뜬다 — 원본 데모 영상(`LastSight_Demo.mp4`, 200MB+)은 용량 때문에 git에 안 올렸지만, 프론트엔드가 자동으로 GitHub Release에서 직접 스트리밍해오므로 로컬에 따로 받아둘 필요도 없다.
+
 ```bash
+# 0. 저장소 클론 (아직 안 했다면)
+git clone https://github.com/NWBS-5919/LastSight.git
+cd LastSight
+
 # 1. 파이썬 환경
 conda env create -f environment.yml
 conda activate lastsight
-cp .env.example .env   # SUPERB_AI_TENANT / SUPERB_AI_API_KEY 채우기
+cp .env.example .env   # SUPERB_AI_TENANT / SUPERB_AI_API_KEY 채우기 (BDAI 테넌트 설정 > API 키)
 
 # 2. 백엔드
 cd backend && uvicorn app.main:app --reload --port 8000
@@ -41,11 +47,15 @@ cd backend && uvicorn app.main:app --reload --port 8000
 백엔드는 `http://localhost:8000`에서 뜨고, `http://localhost:8000/docs`에서 API 계약(Swagger UI)을 바로 확인할 수 있다.
 
 ```bash
-# 3. 프론트엔드 (백엔드가 8000번에서 떠 있어야 함)
+# 3. 프론트엔드 (백엔드가 8000번에서 떠 있어야 함, 새 터미널에서)
 cd frontend && npm install && npm run dev
 ```
 
-프론트엔드는 `http://localhost:5173`에서 뜨고, 웹소켓으로 백엔드(`app/ws/live.py`)와 실시간 연동해 데모 시나리오(정상 → 화재감지 → 경보 → 상태전환 → 구조카드)를 재생한다. 화면 구성·표시 데이터 상세는 `docs/screen_guide.md` 참고.
+프론트엔드는 `http://localhost:5173`에서 뜨고, 웹소켓으로 백엔드(`app/ws/live.py`)와 실시간 연동해 데모 시나리오(정상 → 화재감지 → 경보 → 상태전환 → 구조카드 → 요약 브리핑)를 재생한다. 브라우저에서 열고 우측 상단 "시나리오 시작"을 누르면 바로 재생된다. 화면 구성·표시 데이터 상세는 `docs/screen_guide.md` 참고.
+
+### 외부 접속용 배포 (Render)
+
+`Dockerfile`+`render.yaml`로 백엔드가 프론트엔드 빌드까지 같이 서빙하는 서비스 하나로 배포하게 만들어뒀다 — Render 대시보드에서 **New +** → **Blueprint**로 이 저장소를 연결하면 `render.yaml`을 그대로 읽어 서비스가 만들어진다(무료 플랜). `SUPERB_AI_TENANT`/`SUPERB_AI_API_KEY`/`PPE_DEPLOYMENT_ID`/`FIRE_SMOKE_DEPLOYMENT_ID`는 Render 대시보드에서 직접 입력해야 한다(값이 git에 없음). `main` 브랜치에 푸시할 때마다 Render가 자동으로 재배포한다.
 
 ## 역할 분담
 
