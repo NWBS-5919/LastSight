@@ -1,9 +1,21 @@
 import type { ChatMessage, ChatReply, ComplianceState, PpeViolationEntry, ScenarioSnapshot, ZoneMapConfig } from "./types";
 
-// 배포(Render 등)에서는 백엔드가 프론트엔드 빌드를 그대로 서빙해 같은 오리진이므로
-// 상대 경로("")면 충분하다 — 로컬 개발(vite dev server, 5173)만 별도 오리진(8000)의
-// 백엔드를 가리켜야 한다. VITE_API_BASE_URL을 명시하면 항상 그 값이 우선한다.
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? "http://localhost:8000" : "");
+// 개발 서버에서는 Vite가 API와 WebSocket을 Render로 프록시하므로 브라우저 관점에서는
+// 항상 같은 origin이다. 이 방식이면 localhost/127.0.0.1 차이로 PATCH·POST preflight가
+// 막히지 않는다. 로컬 백엔드를 직접 쓸 때만 VITE_API_BASE_URL=http://localhost:8000으로
+// 덮어쓸 수 있다. 배포본도 백엔드가 같은 origin에서 정적 파일을 서빙한다.
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
+
+async function responseError(res: Response, fallback: string): Promise<Error> {
+  let detail = "";
+  try {
+    const body = (await res.json()) as { detail?: unknown };
+    if (typeof body.detail === "string") detail = ` · ${body.detail}`;
+  } catch {
+    // 오류 본문이 JSON이 아니면 상태 코드만 표시한다.
+  }
+  return new Error(`${fallback} (${res.status})${detail}`);
+}
 
 export function frameUrl(path: string): string {
   // scenario_runner가 넘겨주는 frame_image_url은 "/demo-frames/frames/xxxx.jpg" 형태.
@@ -19,15 +31,18 @@ export const DEMO_VIDEO_URL =
   import.meta.env.VITE_DEMO_VIDEO_URL ?? "https://github.com/NWBS-5919/LastSight/releases/download/demo-assets-v1/LastSight_Demo.mp4";
 
 export async function startScenario(speed = 1.0): Promise<void> {
-  await fetch(`${API_BASE}/scenario/start?speed=${speed}`, { method: "POST" });
+  const res = await fetch(`${API_BASE}/scenario/start?speed=${speed}`, { method: "POST" });
+  if (!res.ok) throw new Error(`시나리오 시작 요청에 실패했습니다. (${res.status})`);
 }
 
 export async function resetScenario(): Promise<void> {
-  await fetch(`${API_BASE}/scenario/reset`, { method: "POST" });
+  const res = await fetch(`${API_BASE}/scenario/reset`, { method: "POST" });
+  if (!res.ok) throw new Error(`시나리오 초기화 요청에 실패했습니다. (${res.status})`);
 }
 
 export async function fetchState(): Promise<ScenarioSnapshot> {
   const res = await fetch(`${API_BASE}/scenario/state`);
+  if (!res.ok) throw new Error(`시나리오 상태를 불러오지 못했습니다. (${res.status})`);
   return res.json();
 }
 
@@ -47,37 +62,37 @@ export async function sendChatMessage(messages: ChatMessage[]): Promise<ChatRepl
   return res.json();
 }
 
-export async function saveZoneMap(config: ZoneMapConfig): Promise<ZoneMapConfig> {
-  const res = await fetch(`${API_BASE}/zone-maps/${config.camera_id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(config),
-  });
-  if (!res.ok) throw new Error("구역 정보를 저장하지 못했습니다.");
-  return res.json();
-}
-
 export async function reviewPpeViolation(
   cameraId: string,
   entryId: string,
   review: { helmet: ComplianceState; vest: ComplianceState },
 ): Promise<PpeViolationEntry> {
-  const res = await fetch(`${API_BASE}/ppe-violations/${cameraId}/${entryId}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(review),
-  });
-  if (!res.ok) throw new Error("검토 내용을 저장하지 못했습니다.");
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/ppe-violations/${cameraId}/${entryId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(review),
+    });
+  } catch {
+    throw new Error("백엔드에 연결하지 못했습니다. 네트워크 또는 접속 주소를 확인해주세요.");
+  }
+  if (!res.ok) throw await responseError(res, "검토 내용을 저장하지 못했습니다.");
   return res.json();
 }
 
 export async function mergePpeViolations(cameraId: string, idA: string, idB: string): Promise<PpeViolationEntry> {
-  const res = await fetch(`${API_BASE}/ppe-violations/${cameraId}/merge`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id_a: idA, id_b: idB }),
-  });
-  if (!res.ok) throw new Error("두 항목을 합치지 못했습니다.");
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/ppe-violations/${cameraId}/merge`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id_a: idA, id_b: idB }),
+    });
+  } catch {
+    throw new Error("백엔드에 연결하지 못했습니다. 네트워크 또는 접속 주소를 확인해주세요.");
+  }
+  if (!res.ok) throw await responseError(res, "두 항목을 합치지 못했습니다.");
   return res.json();
 }
 

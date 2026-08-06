@@ -1,78 +1,99 @@
 :root {
-  color-scheme: dark;
-
-  /* surfaces — 차분한 차콜, 파란기 없는 무채색 기반 */
-  --bg: #0a0a0b;
-  --panel: #131315;
-  --panel-alt: #1a1a1d;
-  --border: #2b2b2f;
-  --border-strong: #3d3d42;
-
-  /* text */
-  --text: #d6d6d3;
-  --text-dim: #86868c;
-  --text-faint: #57575d;
-
-  /* accent — safety orange (관제/현장 안전색) */
-  --accent: #ff6a1a;
-  --accent-dim: #7a3a17;
-  --accent-bg: rgba(255, 106, 26, 0.1);
-
-  /* status — 이 다섯 개가 앱 전체(SVG 오버레이·타임라인·카드·배지)에서 쓰는 유일한
-     의미색 팔레트다. 예전엔 컴포넌트마다 비슷하지만 미묘하게 다른 hex를 따로 박아
-     넣어(#ff2d2d vs #e8412c 두 종류의 빨강, 초록 #4ade80 vs 파랑 --ok 두 종류의
-     "정상" 등) 같은 의미인데 색이 어긋나는 곳이 있었다(2026-08-06 정리) — 이제
-     모든 컴포넌트가 이 토큰만 참조한다. */
-  --danger: #e8412c;
-  --danger-bg: rgba(232, 65, 44, 0.12);
-  --warning: #e0a020;
-  --warning-bg: rgba(224, 160, 32, 0.12);
-  --ok: #4ade80;
-  --ok-bg: rgba(74, 222, 128, 0.12);
-  --smoke: #9c8fbf;
-  --smoke-bg: rgba(156, 143, 191, 0.12);
-  --muted: #6b6b70;
-  --muted-bg: rgba(107, 107, 112, 0.12);
-  /* 영상 위에 그리는 SVG 박스용 중립색 — 본문 텍스트(--text)와 별도 토큰인 이유는
-     쓰이는 맥락이 달라서다: --text는 어두운 패널 위 가독성 기준으로 고른 톤이고,
-     이건 임의의 영상 프레임 위에서도 늘 또렷이 보여야 하는 밝은 흰색이 필요하다. */
-  --overlay-neutral: #e8e8ec;
-
-  --radius: 2px;
-  --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Consolas", monospace;
-  --sans: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", sans-serif;
-
-  font: 14px/1.5 var(--sans);
+  color-scheme: light;
+  --bg: #f3f6f8;
+  --panel: #ffffff;
+  --panel-alt: #f7f9fa;
+  --panel-strong: #eef3f5;
+  --border: #dce4e8;
+  --border-strong: #c9d5da;
+  --text: #13252e;
+  --text-dim: #61737c;
+  --text-faint: #93a2a9;
+  --navy: #12384a;
+  --navy-strong: #0d2c3b;
+  --accent: #2d778f;
+  --accent-hover: #23667c;
+  --accent-dim: #d8ebf0;
+  --accent-bg: #edf7f9;
+  --danger: #d5483f;
+  --danger-strong: #af332d;
+  --danger-bg: #fff0ee;
+  --warning: #c57a20;
+  --warning-bg: #fff6e7;
+  --ok: #309873;
+  --ok-bg: #eaf7f1;
+  --smoke: #7d6fa4;
+  --smoke-bg: #f1eef8;
+  --muted: #798a92;
+  --muted-bg: #f0f3f4;
+  /* 영상 프레임 위 정상 감지 BBOX는 배경색과 무관하게 보여야 하므로 본문색과 분리한다. */
+  --overlay-neutral: #ffffff;
+  --radius: 14px;
+  --radius-sm: 9px;
+  --shadow-sm: 0 1px 2px rgba(15, 41, 52, 0.04), 0 8px 24px rgba(15, 41, 52, 0.05);
+  --shadow-lg: 0 20px 60px rgba(15, 41, 52, 0.16);
+  --sans: "Pretendard Variable", "Pretendard", sans-serif;
+  --mono: "Pretendard Variable", "Pretendard", sans-serif;
+  font-family: var(--sans);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  background: var(--bg);
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
   background: var(--bg);
   color: var(--text);
-  min-height: 100vh;
-  background-image: repeating-linear-gradient(
-    0deg,
-    rgba(255, 255, 255, 0.012) 0px,
-    rgba(255, 255, 255, 0.012) 1px,
-    transparent 1px,
-    transparent 3px
-  );
+  font-family: var(--sans);
+}
+
+body,
+button,
+input,
+textarea,
+select {
+  font-family: var(--sans) !important;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid rgba(45, 119, 143, 0.22);
+  outline-offset: 2px;
+}
+
+button:disabled {
+  cursor: not-allowed;
 }
 
 #root {
   min-height: 100vh;
 }
 
-button {
-  font: inherit;
-  cursor: pointer;
-}
-
 ::selection {
   background: var(--accent-dim);
-  color: #fff;
+  color: var(--navy-strong);
 }

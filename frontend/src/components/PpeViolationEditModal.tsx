@@ -40,8 +40,8 @@ export function PpeViolationEditModal({
       const updated = await reviewPpeViolation(cameraId, entry.id, { helmet, vest });
       onSaved(updated);
       onClose();
-    } catch {
-      setError("저장에 실패했습니다. 다시 시도해주세요.");
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "저장에 실패했습니다. 다시 시도해주세요.");
     } finally {
       setSaving(false);
     }

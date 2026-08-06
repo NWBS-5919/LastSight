@@ -20,7 +20,7 @@ const EMPTY_STATE: ScenarioSnapshot = {
   ppe_violation_events: [],
 };
 
-export function useLiveState(): ScenarioSnapshot {
+export function useLiveState(refreshKey = 0): ScenarioSnapshot {
   const [snapshot, setSnapshot] = useState<ScenarioSnapshot>(EMPTY_STATE);
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -34,7 +34,7 @@ export function useLiveState(): ScenarioSnapshot {
     const ws = connectLiveSocket(setSnapshot);
     wsRef.current = ws;
     return () => ws.close();
-  }, []);
+  }, [refreshKey]);
 
   return snapshot;
 }

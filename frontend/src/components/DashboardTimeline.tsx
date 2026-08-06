@@ -30,6 +30,7 @@ interface Props {
   onSelectPpe: (entry: PpeViolationEntry) => void;
   onSelectSituation: (entry: SituationCheckEntry) => void;
   onSelectFire: (alert: FireAlert) => void;
+  onDataChanged?: () => void;
 }
 
 const RED = "var(--danger)";
@@ -144,6 +145,7 @@ export function DashboardTimeline({
   onSelectPpe,
   onSelectSituation,
   onSelectFire,
+  onDataChanged,
 }: Props) {
   const nodes = useMemo(
     () => buildNodes(scenarioStartedAt, fireAlert, ppeEvents, situationChecks),
@@ -152,6 +154,9 @@ export function DashboardTimeline({
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [mergeError, setMergeError] = useState<string | null>(null);
+  const [mergeMode, setMergeMode] = useState(false);
+  const [mergeSourceId, setMergeSourceId] = useState<string | null>(null);
+  const [merging, setMerging] = useState(false);
 
   if (nodes.length === 0) return null;
 
@@ -171,8 +176,36 @@ export function DashboardTimeline({
   const hasAbsoluteTimeLabel = nodes.some((n) => n.absoluteAt);
   const trackHeight = 40 + (maxAboveTier + 1) * ROW_HEIGHT + (maxBelowTier + 1) * ROW_HEIGHT + (hasAbsoluteTimeLabel ? 18 : 0);
 
+  const mergeEntries = async (sourceId: string, targetId: string) => {
+    if (sourceId === targetId || merging) return;
+    setMerging(true);
+    setMergeError(null);
+    try {
+      await mergePpeViolations(cameraId, sourceId, targetId);
+      setMergeSourceId(null);
+      setMergeMode(false);
+      onDataChanged?.();
+    } catch (mergeFailure) {
+      setMergeError(mergeFailure instanceof Error ? mergeFailure.message : "두 항목을 합치지 못했습니다. 다시 시도해주세요.");
+    } finally {
+      setMerging(false);
+    }
+  };
+
   const handleClick = (action: NodeAction | null) => {
     if (!action) return;
+    if (mergeMode) {
+      if (action.kind !== "ppe") return;
+      if (!mergeSourceId) {
+        setMergeSourceId(action.entry.id);
+        setMergeError(null);
+      } else if (mergeSourceId === action.entry.id) {
+        setMergeSourceId(null);
+      } else {
+        void mergeEntries(mergeSourceId, action.entry.id);
+      }
+      return;
+    }
     if (action.kind === "ppe") onSelectPpe(action.entry);
     else if (action.kind === "situation") onSelectSituation(action.entry);
     else onSelectFire(action.alert);
@@ -186,11 +219,7 @@ export function DashboardTimeline({
     setDraggingId(null);
     setDragOverId(null);
     if (!sourceId || sourceId === targetId) return;
-    try {
-      await mergePpeViolations(cameraId, sourceId, targetId);
-    } catch {
-      setMergeError("두 항목을 합치지 못했습니다. 다시 시도해주세요.");
-    }
+    await mergeEntries(sourceId, targetId);
   };
 
   return (
@@ -201,13 +230,14 @@ export function DashboardTimeline({
           {nodes.map((n, i) => {
             const isPpe = n.action?.kind === "ppe";
             const isDragOver = isPpe && dragOverId === n.key && draggingId !== n.key;
+            const isMergeSelected = isPpe && mergeSourceId === n.key;
             const { side, tier } = layout[i];
             const offset = BASE_OFFSET + tier * ROW_HEIGHT;
             const labelStyle = side === "above" ? { bottom: `${offset}px`, top: "auto" } : { top: `${offset}px` };
             return (
               <button
                 key={n.key}
-                className={`situation-timeline__point ${isDragOver ? "situation-timeline__point--drop-target" : ""}`}
+                className={`situation-timeline__point ${isDragOver || isMergeSelected ? "situation-timeline__point--drop-target" : ""}`}
                 style={{ left: `${(n.elapsedSeconds / maxElapsed) * 100}%` }}
                 onClick={() => handleClick(n.action)}
                 disabled={!n.action}
@@ -262,7 +292,25 @@ export function DashboardTimeline({
         </div>
       </div>
       <div className="situation-timeline__footer">
-        <p className="situation-timeline__hint">같은 사람의 중복된 PPE 위반 노드는 서로 끌어다 놓으면 하나로 합쳐집니다.</p>
+        <p className="situation-timeline__hint">
+          {mergeMode
+            ? mergeSourceId
+              ? "첫 번째 노드를 선택했습니다. 합칠 두 번째 PPE 노드를 선택하세요."
+              : "같은 사람으로 판단한 첫 번째 PPE 노드를 선택하세요."
+            : "PPE 노드를 서로 끌어다 놓거나 병합 모드에서 두 노드를 차례로 선택하세요."}
+        </p>
+        <button
+          type="button"
+          className={mergeMode ? "primary-button" : "secondary-button"}
+          disabled={merging}
+          onClick={() => {
+            setMergeMode((active) => !active);
+            setMergeSourceId(null);
+            setMergeError(null);
+          }}
+        >
+          {merging ? "병합 중..." : mergeMode ? "병합 취소" : "중복 노드 병합"}
+        </button>
       </div>
     </div>
   );

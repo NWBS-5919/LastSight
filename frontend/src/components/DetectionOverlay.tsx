@@ -59,7 +59,7 @@ function Box({
           fill={color}
           fontSize={frameWidth / 70}
           fontWeight={700}
-          fontFamily="ui-monospace, monospace"
+          fontFamily="Pretendard Variable, Pretendard, sans-serif"
         >
           {label}
         </text>
@@ -87,7 +87,7 @@ export function DetectionOverlay({ detections, frameWidth, frameHeight, complian
                 stroke={color}
                 strokeWidth={Math.max(2, frameWidth / 400)}
               />
-              <text x={x1} y={Math.max(0, y1 - 6)} fill={color} fontSize={frameWidth / 80} fontWeight={700} fontFamily="ui-monospace, monospace">
+              <text x={x1} y={Math.max(0, y1 - 6)} fill={color} fontSize={frameWidth / 80} fontWeight={700} fontFamily="Pretendard Variable, Pretendard, sans-serif">
                 {d.object_class} {(d.confidence * 100).toFixed(0)}%
               </text>
             </g>

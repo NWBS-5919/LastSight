@@ -6,11 +6,17 @@ export function SituationDetailModal({
   entry,
   frameWidth,
   frameHeight,
+  rangeStartAt,
+  sampleCount,
+  fireTriggeredAt,
   onClose,
 }: {
   entry: SituationCheckEntry;
   frameWidth: number;
   frameHeight: number;
+  rangeStartAt?: string;
+  sampleCount?: number;
+  fireTriggeredAt?: string | null;
   onClose: () => void;
 }) {
   const boxes = entry.zones.flatMap((z) => z.boxes);
@@ -23,13 +29,23 @@ export function SituationDetailModal({
       return `${z.zone_id} 총 ${z.total}명(${parts})`;
     })
     .join(" / ");
+  const elapsedOf = (at: string) =>
+    fireTriggeredAt ? Math.max(0, Math.round((new Date(at).getTime() - new Date(fireTriggeredAt).getTime()) / 1000)) : null;
+  const startElapsed = elapsedOf(rangeStartAt ?? entry.at);
+  const endElapsed = elapsedOf(entry.at);
+  const rangeLabel =
+    startElapsed == null || endElapsed == null
+      ? new Date(entry.at).toLocaleTimeString("ko-KR")
+      : startElapsed === endElapsed
+        ? `화재 발생 후 ${endElapsed}초`
+        : `화재 발생 후 ${startElapsed}초~${endElapsed}초`;
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal briefing-card" onClick={(e) => e.stopPropagation()}>
         <div className="briefing-card__header">2차 확인 상세</div>
         <div className="briefing-card__disclaimer">추정 정보 — 확정 아님</div>
-        <div className="briefing-card__id">{new Date(entry.at).toLocaleTimeString("ko-KR")}</div>
+        <div className="briefing-card__id">{rangeLabel}{sampleCount && sampleCount > 1 ? ` · ${sampleCount}회 동일 집계` : ""}</div>
         {entry.frame_path && (
           <div className="briefing-card__image-frame">
             <img className="briefing-card__image" src={frameUrl(entry.frame_path)} alt="2차 확인 프레임" />
@@ -60,6 +76,7 @@ export function SituationDetailModal({
           </div>
         )}
         <p>{breakdownText}</p>
+        {sampleCount && sampleCount > 1 && <p className="briefing-card__disclaimer">표시 이미지는 이 구간의 마지막 확인 프레임입니다.</p>}
         <button className="modal__close" onClick={onClose}>
           닫기
         </button>
