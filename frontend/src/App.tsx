@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
-import { DEMO_VIDEO_URL, fetchZoneMap, resetScenario, startScenario } from "./api";
+import { DEMO_VIDEO_URL, fetchZoneMap, frameUrl, resetScenario, startScenario } from "./api";
 import { DashboardTimeline } from "./components/DashboardTimeline";
 import { DetectionOverlay } from "./components/DetectionOverlay";
 import { FireAlertModal } from "./components/FireAlertModal";
 import { PpeViolationCard } from "./components/PpeViolationCard";
 import { PpeViolationEditModal } from "./components/PpeViolationEditModal";
 import { SituationCard } from "./components/SituationCard";
+import { SituationChatPanel } from "./components/SituationChatPanel";
 import { SituationDetailModal } from "./components/SituationDetailModal";
 import { StatCard } from "./components/StatCard";
 import { ZoneMapModal } from "./components/ZoneMapModal";
@@ -44,13 +45,20 @@ function App() {
     if (!video) return;
     if (!snapshot.running) {
       video.pause();
+      // 2026-08-06: 재생 중이 아닐 때(시작 전 · 종료 후 · 새로고침 직후) 여기서 seek를
+      // 안 해주면, 한 번도 프레임을 그려본 적 없는 <video>가 검은 화면으로 남는다(실측
+      // — poster는 재생을 한 번이라도 시작하면 다시 안 뜨므로 이 경우엔 소용없다). 지금
+      // 상태에 맞는 프레임(끝났으면 마지막 프레임)으로 항상 맞춰둔다.
+      if (snapshot.frame_t != null && Math.abs(video.currentTime - snapshot.frame_t) > 0.05) {
+        video.currentTime = snapshot.frame_t;
+      }
       return;
     }
     if (video.paused) {
       video.currentTime = snapshot.frame_t ?? 0;
       video.play().catch(() => {});
     }
-  }, [snapshot.running]);
+  }, [snapshot.running, snapshot.frame_t]);
 
   // 2026-08-03: <video> 재생과 박스 갱신(백엔드 target_elapsed 페이싱)은 서로 독립된
   // 시계다 — 시작 시점의 웹소켓 왕복 지연·영상 디코딩 지연 때문에 초기 오프셋이 생기고,
@@ -105,10 +113,15 @@ function App() {
 
       {emergencyMode && snapshot.fire_alert && (
         <div className="fire-banner">
+          <svg className="fire-banner__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03z" />
+          </svg>
           <span className="fire-banner__tag">화재경보</span>
-          {new Date(snapshot.fire_alert.triggered_at).toLocaleTimeString("ko-KR")} 발생 · 트리거:{" "}
-          {snapshot.fire_alert.source === "auto_detection" ? "자동탐지" : "수동"}
-          {snapshot.fire_alert.confidence != null && ` · 신뢰도 ${(snapshot.fire_alert.confidence * 100).toFixed(0)}%`}
+          <span className="fire-banner__detail">
+            {new Date(snapshot.fire_alert.triggered_at).toLocaleTimeString("ko-KR")} 발생 · 트리거:{" "}
+            {snapshot.fire_alert.source === "auto_detection" ? "자동탐지" : "수동"}
+            {snapshot.fire_alert.confidence != null && ` · 신뢰도 ${(snapshot.fire_alert.confidence * 100).toFixed(0)}%`}
+          </span>
         </div>
       )}
 
@@ -133,18 +146,36 @@ function App() {
             )}
           </div>
 
-          <div className="camera-feed">
-            <div className="camera-feed__frame">
-              <video ref={videoRef} src={DEMO_VIDEO_URL} muted playsInline />
-              <DetectionOverlay
-                detections={snapshot.current_detections}
-                complianceBoxes={snapshot.current_person_compliance}
-                emergencyMode={emergencyMode}
-                frameWidth={snapshot.frame_width}
-                frameHeight={snapshot.frame_height}
-              />
+          <div className="camera-row">
+            <div className="camera-feed">
+              <div className="camera-feed__frame">
+                <video
+                  ref={videoRef}
+                  src={DEMO_VIDEO_URL}
+                  poster={frameUrl("/demo-frames/frames/0000.jpg")}
+                  muted
+                  playsInline
+                />
+                <DetectionOverlay
+                  detections={snapshot.current_detections}
+                  complianceBoxes={snapshot.current_person_compliance}
+                  emergencyMode={emergencyMode}
+                  frameWidth={snapshot.frame_width}
+                  frameHeight={snapshot.frame_height}
+                />
+              </div>
+              <div className="camera-feed__caption">
+                demo-camera{snapshot.frame_idx >= 0 ? ` · 박스 갱신 #${snapshot.frame_idx}` : " · 대기 중"}
+              </div>
             </div>
-            <div className="camera-feed__caption">demo-camera · 박스 갱신 #{snapshot.frame_idx}</div>
+            {/* 2026-08-05: 한 번 누르면 끝나는 "요약 브리핑" 버튼을 채팅 패널로 대체 —
+                영상 옆에 붙이되 아래 타임라인은 그대로 화면 전체 너비를 쓴다(예전에 사이드바가
+                타임라인 너비를 잡아먹어 없앤 적이 있어, 이번엔 영상 높이만큼만 차지하게 함).
+                2026-08-06: 시나리오 시작 전엔 아예 안 보이게 했더니 영상 옆이 텅 비어
+                레이아웃이 어색했다 — 항상 보이게 하고, 시작 전 질문에는 "기록된 데이터 없음"으로
+                정직하게 답하게 둔다(백엔드가 이미 그렇게 답함, 별도 처리 불필요). key를 시나리오
+                시작 시각으로 줘서 실제로 시작되는 순간에는 대화 이력이 새로 초기화된다. */}
+            <SituationChatPanel key={snapshot.scenario_started_at ?? "idle"} />
           </div>
 
           {snapshot.scenario_started_at && (

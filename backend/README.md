@@ -15,9 +15,9 @@ uvicorn app.main:app --reload --port 8000
 
 ## 폴더 역할
 
-- `app/api/` — HTTP 라우터. 데모 시나리오 재생 상태(`app/pipeline/scenario_runner.py`)와 `app/rules/*` 로그 모듈을 그대로 조회·조합해서 응답한다(더미 데이터 아님). `situation_summary.py`가 "요약 브리핑" 버튼용 Gemini 요약 엔드포인트
+- `app/api/` — HTTP 라우터. 데모 시나리오 재생 상태(`app/pipeline/scenario_runner.py`)와 `app/rules/*` 로그 모듈을 그대로 조회·조합해서 응답한다(더미 데이터 아님). `situation_chat.py`가 영상 옆 구조 브리핑 챗봇용 Gemini 대화 엔드포인트(`POST /situation-chat`)
 - `app/inference/` — 탐지 모델(person/helmet/vest, fire/smoke) 추론 래퍼(`detector.py`), ZERO 2차 확인(`situation_probe.py`), Gemini 상황 요약(`briefing.py`, BDAI 게이트웨이 재사용)
-- `app/rules/` — 구역 판정(`zone.py`), 관리구역(소화기/전기패널/비상구) 변화 감지(`clearance_zone.py`)+로그(`clearance_zone_log.py`), 화재경보 자동 트리거(`alarm_trigger.py`)+로그(`fire_alert_log.py`), PPE 착용 판정(`ppe_compliance.py`)+감지 on/off 설정(`ppe_settings.py`)+미착용 로그·검토·병합(`ppe_violation_log.py`), 구역별 상황 집계 로그(`zone_situation_log.py`)
+- `app/rules/` — 구역 판정(`zone.py`), 화재경보 자동 트리거(`alarm_trigger.py`)+로그(`fire_alert_log.py`), PPE 착용 판정(`ppe_compliance.py`)+감지 on/off 설정(`ppe_settings.py`)+미착용 로그·검토·병합(`ppe_violation_log.py`), 구역별 상황 집계 로그(`zone_situation_log.py`)
 - `app/pipeline/scenario_runner.py` — 데모 시나리오 재생 오케스트레이터. 매 프레임 위 규칙 모듈들을 실제로 호출해 in-memory 상태(`STATE`)를 갱신하고 REST/웹소켓에 공유. 화재 발생 전에는 추적 없이 프레임마다 PPE 판정만, 화재 발생 후에는 매초 `situation_probe`로 2차 확인 카드를 쌓는 방식이다(개인별 추적 상태는 화면에 안 씀 — `docs/development_log.md` 51번 참고)
 - `app/tracking/byte_track.py`, `app/rules/state_engine.py`, `app/rules/worker_log.py` — 예전 개인별 추적 기반 설계에서 쓰던 모듈. 지금 실시간 파이프라인에서는 더 안 쓰지만, 각자 단위 테스트가 딸려 있어 그대로 남겨뒀다(vestigial)
 - `app/ws/live.py` — 실시간 상태 브로드캐스트 웹소켓

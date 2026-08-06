@@ -38,7 +38,7 @@ def put_ppe_settings(camera_id: str, settings: PpeDetectionSettings) -> PpeDetec
 @router.get("/ppe/summary")
 def ppe_summary() -> dict:
     return {
-        "violations_today": scenario_runner.STATE.ppe_violations_today,
+        "violations_today": len(scenario_runner.STATE.ppe_violation_events),
         "zone_person_counts": scenario_runner.STATE.zone_person_counts,
         "camera_ok": True,
         "event_feed": scenario_runner.STATE.event_feed[-10:],

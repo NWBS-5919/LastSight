@@ -125,7 +125,6 @@ class DemoState:
     # 필드 자체는 남겨둔다. 대시보드는 대신 situation_checks(아래)를 쓴다.
     workers: dict[str, WorkerStatus] = field(default_factory=dict)
     event_feed: list[dict] = field(default_factory=list)
-    ppe_violations_today: int = 0
     zone_person_counts: dict[str, int] = field(default_factory=dict)
     # 화면에 bbox 오버레이를 그리기 위한 현재 프레임의 원본 탐지 결과(추적 ID 부여 전).
     current_detections: list[dict] = field(default_factory=list)
@@ -180,7 +179,12 @@ def snapshot_dict() -> dict:
         "fire_alert": STATE.fire_alert.model_dump() if STATE.fire_alert else None,
         "workers": [w.model_dump() for w in STATE.workers.values()],
         "event_feed": STATE.event_feed[-30:],
-        "ppe_violations_today": STATE.ppe_violations_today,
+        # 2026-08-06: 예전엔 위반이 새로 생길 때마다 STATE.ppe_violations_today를 따로
+        # +1 했는데, merge_ppe_violations()가 ppe_violation_events는 줄이면서 이 카운터는
+        # 안 건드려서 병합 후 숫자가 실제 타임라인/카드 개수보다 커지는 어긋남이 있었다
+        # (사용자 지적). 별도 카운터 없이 항상 ppe_violation_events 길이에서 그대로
+        # 계산해서, 대시보드 숫자가 타임라인에 보이는 것과 항상 정확히 같도록 했다.
+        "ppe_violations_today": len(STATE.ppe_violation_events),
         "zone_person_counts": STATE.zone_person_counts,
         "current_detections": STATE.current_detections,
         "current_person_compliance": [p.model_dump() for p in STATE.current_person_compliance],
@@ -418,7 +422,6 @@ async def run_scenario(speed: float = 1.0) -> None:
                     )
                 )
                 if logged is not None:
-                    STATE.ppe_violations_today += 1
                     STATE.ppe_violation_events.append(logged)
                     _add_event(f"{zone_id}에서 {ppe_violation_log.format_violation_text(violations)} 감지", now)
             STATE.current_person_compliance = person_compliance

@@ -38,6 +38,18 @@ data/zone_maps/images/
 !data/exports/.gitkeep
 !data/public_datasets/.gitkeep
 
+# 어노테이션 도구(app/api/annotate.py) 작업별 임시 프레임 덤프 — 실행할 때마다 새로 생기고
+# 용량만 크다. 예전에 실수로 몇 개가 커밋된 적이 있어(2026-08-06 정리), 지금 있는 잡 폴더는
+# git에서 내리고 앞으로는 아예 추적하지 않는다.
+backend/data/annotate_jobs/
+
+# 데모 영상 원본 — 용량 문제로 git엔 안 올리고 GitHub Release로 따로 배포한다(README 참고).
+*.mp4
+
+# 스크립트 실행 중 남는 백업 스냅샷
+*.bak
+*.bak[0-9]
+
 # OS
 .DS_Store
 

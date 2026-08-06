@@ -174,26 +174,16 @@ class PpeDetectionSettings(BaseModel):
     detect_vest: bool = True
 
 
-class ClearanceZoneLogEntry(BaseModel):
-    """관리구역 상태 변화 기록 1건 (WorkerEventLogEntry와 같은 패턴).
-    evaluate_clearance_zone()이 계산한 새 상태가 직전과 다를 때만 한 줄 남긴다."""
-
-    zone_id: str
-    state: "ClearanceZoneState"
-    at: str  # ISO8601
-    situation_note: str | None = None  # ABNORMAL 전환 시 ZERO 추가 확인 결과(app/rules/situation_probe.py)
-
-
 class IncidentTimelineEntry(BaseModel):
-    """사고 리플레이 타임라인 한 줄 — 화재경보/작업자 상태변화/관리구역 상태변화/PPE
-    미착용/구역별 상황집계를 한 종류(source)로 통합해 시간순으로 병합한 것.
+    """사고 리플레이 타임라인 한 줄 — 화재경보/작업자 상태변화/PPE 미착용/구역별
+    상황집계를 한 종류(source)로 통합해 시간순으로 병합한 것.
     app/api/incidents.py에서 조립한다.
 
     track_id는 source="worker"(비상시에만 추적하므로 track_id가 있음)일 때만 채워진다 —
     "ppe_violation"/"zone_situation"은 평상시·구역집계 성격상 특정 사람 ID를 안 쓴다."""
 
     at: str  # ISO8601
-    source: str  # "fire_alert" | "worker" | "clearance_zone" | "ppe_violation" | "zone_situation"
+    source: str  # "fire_alert" | "worker" | "ppe_violation" | "zone_situation"
     text: str  # 대시보드에 그대로 표시할 한 줄(또는 여러 줄) 설명
     track_id: str | None = None
     zone_id: str | None = None
@@ -270,63 +260,21 @@ class ZoneMapConfig(BaseModel):
     image_width: int | None = None
     image_height: int | None = None
     zones: list[ZoneDef] = []
-    clearance_zones: list["ClearanceZoneDef"] = []
 
 
-class ClearanceZoneType(StrEnum):
-    """평상시 예방 축 — '이 구역이 기준 화면(등록 시점 사진)과 달라졌는지'를 감시하는 구역 종류.
+class ChatTurn(BaseModel):
+    """구조 브리핑 챗봇의 대화 한 마디. role은 OpenAI 규약과 동일("user"/"assistant")."""
 
-    셋 다 판정 방식(app/rules/clearance_zone.py의 변화 감지)이 완전히 같다 — 종류는 UI 표시·
-    라벨링 용도로만 구분한다. 소화기도 별도로 "소화기 클래스"를 탐지하는 모델을 학습시키는
-    대신 이 방식으로 처리한다: 실제 CCTV 환경(높은 각도로 작게, 비스듬히 찍히고, 공사현장
-    특성상 사람·자재가 계속 오가는 환경)에서는 공개 데이터셋(대부분 정면/눈높이 사진)으로
-    학습한 탐지 모델이 각도 차이 때문에 잘 안 맞을 위험이 크고, 어차피 "그 자리가 가려졌는지"만
-    확인하면 되므로 변화 감지만으로 충분하다.
-
-    스프링클러/화재감지기 주변 적재 높이 위반은 후보로 검토했으나 제외했다 — 일반적인 CCTV는
-    사람·바닥 영역 위주로 비스듬히 아래를 보게 설치돼 천장 근처가 화각에 안 잡히는 경우가
-    많고, 카메라를 새로 달거나 재배치하지 않는다는 전제(기존 CCTV 그대로 활용)와도 안 맞는다."""
-
-    FIRE_EXTINGUISHER = "fire_extinguisher"
-    ELECTRICAL_PANEL = "electrical_panel"
-    EMERGENCY_EXIT = "emergency_exit"
+    role: str
+    content: str
 
 
-class ClearanceZoneDef(BaseModel):
-    zone_id: str
-    zone_type: ClearanceZoneType
-    polygon: list[Point]  # >= 3점, 카메라 원본 해상도 기준 픽셀 좌표
-    label: str | None = None  # 관리자가 붙이는 설명 (예: "배전반 A")
-    baseline_frame_path: str | None = None  # "지금 상태를 기준으로 저장" 시점의 참조 이미지
+class ChatReply(BaseModel):
+    """챗봇 답변 1건. frame_path는 답변이 참고한 프레임(시간 힌트를 못 찾았으면 지금 최신
+    프레임) — 프론트엔드가 답변 옆에 썸네일로 보여준다. 어디까지나 보조 정보이며(disclaimer),
+    절대 원칙(CLAUDE.md 2번)을 위반하는 문장이 나오지 않도록 시스템 프롬프트에서 강제한다."""
 
-
-class ClearanceZoneState(StrEnum):
-    NORMAL = "normal"
-    OBSERVING = "observing"  # 변화가 감지됐지만 지속시간 기준을 아직 못 채움
-    ABNORMAL = "abnormal"  # 지속시간 기준을 채워 이상으로 확정됨
-    CAMERA_FAILURE = "camera_failure"
-
-
-class ClearanceZoneStatus(BaseModel):
-    zone_id: str
-    state: ClearanceZoneState
-    changed_since: str | None = None  # ISO8601, 변화가 처음 관측된 시각 (state != NORMAL일 때)
-    last_checked_at: str | None = None  # ISO8601
-    last_frame_path: str | None = None
-    situation_note: str | None = None  # ABNORMAL 전환 시 ZERO 추가 확인 결과(app/rules/situation_probe.py)
-
-
-class SituationSummary(BaseModel):
-    """상황 타임라인의 "요약 브리핑" 버튼 결과 — 이 시점까지 시스템이 실제로 기록한
-    데이터(화재경보, 구역별 인원, 2차 확인 이력, PPE 위반)를 근거로 Gemini가 작성한 한국어
-    요약. 어디까지나 보조 정보이며(disclaimer), 절대 원칙(CLAUDE.md 2번)을 위반하는 문장이
-    나오지 않도록 프롬프트에서 강제한다 — 전원 안전/대피 완료 확정, 잔류인원 확정 금지.
-
-    2026-08-04: 문단 하나로 된 줄글은 관리자가 급하게 훑어보기 어렵다는 피드백으로,
-    한 줄 headline + 짧은 문장 여러 개(points)로 구조화해서 돌려준다 — 프론트엔드가
-    카드/불릿 형태로 그리기 쉽게."""
-
-    headline: str
-    points: list[str]
+    reply: str
+    frame_path: str | None = None
     generated_at: str  # ISO8601
-    disclaimer: str = "이 요약은 AI가 자동 생성한 추정 정보이며, 관리자 판단을 대체하지 않습니다."
+    disclaimer: str = "이 답변은 AI가 자동 생성한 추정 정보이며, 관리자 판단을 대체하지 않습니다."

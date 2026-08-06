@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import annotate, briefing, health, incidents, ppe, scenario, situation_summary, workers, zone_maps
+from app.api import annotate, briefing, health, incidents, ppe, scenario, situation_chat, workers, zone_maps
 from app.ws import live
 
 app = FastAPI(title="LastSight AI API")
@@ -28,7 +28,7 @@ app.include_router(scenario.router)
 app.include_router(live.router)
 app.include_router(annotate.router)
 app.include_router(incidents.router)
-app.include_router(situation_summary.router)
+app.include_router(situation_chat.router)
 
 _DEMO_FRAMES_DIR = Path(__file__).resolve().parents[1] / "data" / "demo" / "frames"
 if _DEMO_FRAMES_DIR.exists():

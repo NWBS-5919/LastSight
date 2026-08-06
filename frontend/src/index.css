@@ -18,15 +18,25 @@
   --accent-dim: #7a3a17;
   --accent-bg: rgba(255, 106, 26, 0.1);
 
-  /* status */
+  /* status — 이 다섯 개가 앱 전체(SVG 오버레이·타임라인·카드·배지)에서 쓰는 유일한
+     의미색 팔레트다. 예전엔 컴포넌트마다 비슷하지만 미묘하게 다른 hex를 따로 박아
+     넣어(#ff2d2d vs #e8412c 두 종류의 빨강, 초록 #4ade80 vs 파랑 --ok 두 종류의
+     "정상" 등) 같은 의미인데 색이 어긋나는 곳이 있었다(2026-08-06 정리) — 이제
+     모든 컴포넌트가 이 토큰만 참조한다. */
   --danger: #e8412c;
   --danger-bg: rgba(232, 65, 44, 0.12);
   --warning: #e0a020;
   --warning-bg: rgba(224, 160, 32, 0.12);
-  --ok: #4a9db8;
-  --ok-bg: rgba(74, 157, 184, 0.1);
+  --ok: #4ade80;
+  --ok-bg: rgba(74, 222, 128, 0.12);
+  --smoke: #9c8fbf;
+  --smoke-bg: rgba(156, 143, 191, 0.12);
   --muted: #6b6b70;
   --muted-bg: rgba(107, 107, 112, 0.12);
+  /* 영상 위에 그리는 SVG 박스용 중립색 — 본문 텍스트(--text)와 별도 토큰인 이유는
+     쓰이는 맥락이 달라서다: --text는 어두운 패널 위 가독성 기준으로 고른 톤이고,
+     이건 임의의 영상 프레임 위에서도 늘 또렷이 보여야 하는 밝은 흰색이 필요하다. */
+  --overlay-neutral: #e8e8ec;
 
   --radius: 2px;
   --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Consolas", monospace;

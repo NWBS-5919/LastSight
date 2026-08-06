@@ -1,9 +1,8 @@
 import { useMemo, useState } from "react";
-import { fetchSituationSummary, mergePpeViolations } from "../api";
+import { mergePpeViolations } from "../api";
 import { categoryColor, combinedBreakdown, STAY_CATEGORY } from "../situationUtils";
 import { assignTimelineLayout } from "../timelineLayout";
-import { SituationSummaryModal } from "./SituationSummaryModal";
-import type { FireAlert, PpeViolationEntry, SituationCheckEntry, SituationSummary } from "../types";
+import type { FireAlert, PpeViolationEntry, SituationCheckEntry } from "../types";
 
 // 2026-08-03: 평상시 타임라인(PPE 위반)과 비상시 타임라인(2차 확인 이정표)을 화재 발생을
 // 기점으로 완전히 갈아치웠는데, 그러면 화재가 나는 순간 지금까지의 평상시 기록이 화면에서
@@ -33,9 +32,9 @@ interface Props {
   onSelectFire: (alert: FireAlert) => void;
 }
 
-const RED = "#ff2d2d";
-const GREEN = "#4ade80";
-const MUTED = "#6b6b70";
+const RED = "var(--danger)";
+const GREEN = "var(--ok)";
+const MUTED = "var(--muted)";
 
 function effectiveHelmet(entry: PpeViolationEntry) {
   return entry.reviewed_helmet ?? entry.helmet_state;
@@ -73,7 +72,7 @@ function buildNodes(
   const startMs = new Date(scenarioStartedAt).getTime();
   const elapsedOf = (iso: string) => Math.max(0, Math.round((new Date(iso).getTime() - startMs) / 1000));
 
-  const nodes: TimelineNode[] = [{ key: "start", label: "영상 시작", elapsedSeconds: 0, color: "#e8e8ec", action: null }];
+  const nodes: TimelineNode[] = [{ key: "start", label: "영상 시작", elapsedSeconds: 0, color: "var(--overlay-neutral)", action: null }];
 
   for (const entry of ppeEvents) {
     const reviewed = entry.reviewed_at != null;
@@ -93,7 +92,7 @@ function buildNodes(
       key: "fire",
       label: "화재 발생",
       elapsedSeconds: elapsedOf(fireTriggeredAt),
-      color: "#e8412c",
+      color: RED,
       action: { kind: "fire", alert: fireAlert },
       absoluteAt: fireTriggeredAt,
     });
@@ -153,9 +152,6 @@ export function DashboardTimeline({
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [mergeError, setMergeError] = useState<string | null>(null);
-  const [summaryLoading, setSummaryLoading] = useState(false);
-  const [summaryError, setSummaryError] = useState<string | null>(null);
-  const [summaryData, setSummaryData] = useState<SituationSummary | null>(null);
 
   if (nodes.length === 0) return null;
 
@@ -194,22 +190,6 @@ export function DashboardTimeline({
       await mergePpeViolations(cameraId, sourceId, targetId);
     } catch {
       setMergeError("두 항목을 합치지 못했습니다. 다시 시도해주세요.");
-    }
-  };
-
-  // 지금까지 쌓인 화재경보/구역인원/2차 확인/PPE 위반 데이터를 근거로 Gemini가 짧은
-  // 한국어 브리핑을 써준다(app/inference/briefing.py) — 관리자가 타임라인을 처음부터 다
-  // 훑지 않고도 지금까지 상황을 빠르게 파악할 수 있게 하는 보조 기능.
-  const handleSummaryClick = async () => {
-    setSummaryLoading(true);
-    setSummaryError(null);
-    try {
-      const data = await fetchSituationSummary();
-      setSummaryData(data);
-    } catch {
-      setSummaryError("브리핑 요약을 만들지 못했습니다. 잠시 후 다시 시도해주세요.");
-    } finally {
-      setSummaryLoading(false);
     }
   };
 
@@ -283,13 +263,7 @@ export function DashboardTimeline({
       </div>
       <div className="situation-timeline__footer">
         <p className="situation-timeline__hint">같은 사람의 중복된 PPE 위반 노드는 서로 끌어다 놓으면 하나로 합쳐집니다.</p>
-        <button className="situation-timeline__summary-btn" onClick={handleSummaryClick} disabled={summaryLoading}>
-          {summaryLoading ? "요약 생성 중..." : "요약 브리핑"}
-        </button>
       </div>
-      {summaryError && <p className="situation-timeline__error">{summaryError}</p>}
-
-      {summaryData && <SituationSummaryModal summary={summaryData} onClose={() => setSummaryData(null)} />}
     </div>
   );
 }

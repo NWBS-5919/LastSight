@@ -79,14 +79,19 @@ export interface ZoneMapConfig {
   image_width: number | null;
   image_height: number | null;
   zones: ZoneDef[];
-  // 관리구역(소화기 등) 정의 — 프론트엔드는 아직 이 형태를 다루지 않으므로, 있는 그대로
-  // 저장·복원만 해서 구역(zones) 편집 시 실수로 지우지 않게 한다.
-  clearance_zones?: unknown[];
 }
 
-export interface SituationSummary {
-  headline: string;
-  points: string[];
+// 2026-08-05: 한 번 누르면 끝나는 "요약 브리핑" 버튼을 챗봇으로 대체했다 — 첫 메시지가
+// 예전 요약 역할을 그대로 하고, 후속 질문("74초쯤엔 뭐였어?" 등)까지 받을 수 있다.
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+  frame_path?: string | null; // assistant 메시지가 참고한 프레임(있으면 썸네일로 보여줌)
+}
+
+export interface ChatReply {
+  reply: string;
+  frame_path: string | null;
   generated_at: string;
   disclaimer: string;
 }

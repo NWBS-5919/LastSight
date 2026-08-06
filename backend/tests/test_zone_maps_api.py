@@ -11,7 +11,6 @@ def test_get_zone_map_returns_empty_default_for_unknown_camera():
     body = res.json()
     assert body["camera_id"] == "no-such-camera"
     assert body["zones"] == []
-    assert body["clearance_zones"] == []
 
 
 def test_put_then_get_zone_map_roundtrip(tmp_path, monkeypatch):

@@ -10,11 +10,11 @@ interface Detection {
 // 대신 complianceBoxes로 사람마다 "착용 상태"만 깔끔하게 표시한다. 비상시엔 개인별 상태
 // 구분 없이 감지된 사람 전원을 초록 박스로만 표시한다(2026-08-03 재설계 — 추적 기반 개인별
 // 상태 표시를 없앴다. development_log.md 참고).
-const FIRE_COLOR: Record<string, string> = { fire: "#e8412c", smoke: "#9c8fbf" };
+const FIRE_COLOR: Record<string, string> = { fire: "var(--danger)", smoke: "var(--smoke)" };
 
-const NORMAL_COLOR = "#e8e8ec"; // 흰색 — 정상 착용(또는 아직 판단 보류)
-const VIOLATION_COLOR = "#ff2d2d"; // 빨강 — 미착용 확정
-const OBSERVED_COLOR = "#4ade80"; // 초록 — 비상시 감지된 사람
+const NORMAL_COLOR = "var(--overlay-neutral)"; // 정상 착용(또는 아직 판단 보류)
+const VIOLATION_COLOR = "var(--danger)"; // 미착용 확정
+const OBSERVED_COLOR = "var(--ok)"; // 비상시 감지된 사람
 
 interface Props {
   detections: Detection[];
@@ -75,7 +75,7 @@ export function DetectionOverlay({ detections, frameWidth, frameHeight, complian
         .filter((d) => d.object_class === "fire" || d.object_class === "smoke")
         .map((d, i) => {
           const [x1, y1, x2, y2] = d.bbox_xyxy;
-          const color = FIRE_COLOR[d.object_class] ?? "#e5e7eb";
+          const color = FIRE_COLOR[d.object_class] ?? "var(--overlay-neutral)";
           return (
             <g key={`fire-${i}`}>
               <rect

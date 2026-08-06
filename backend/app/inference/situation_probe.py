@@ -1,9 +1,9 @@
 """결정적 순간에만 ZERO를 한 번 더 불러 상황을 짧게 요약하는 2차 확인.
 
 평소 상시 감지(person/helmet/vest, fire/smoke)는 가벼운 배포 모델/ZERO 단일 프롬프트로
-처리하고, "화재경보 후 장기체류(PROLONGED_PRESENCE)"나 "관리구역 이상(ABNORMAL)"처럼
-진짜 확인이 필요한 전환 순간에만 이 모듈을 불러 우려되는 상황 문구 여러 개를 ZERO에
-동시에 묻는다. ZERO는 자유 텍스트 설명(캡셔닝)을 만들어주는 VLM이 아니라 개방형
+처리하고, 화재경보 이후 매초 재확인처럼 진짜 확인이 필요한 순간에만 이 모듈을 불러
+우려되는 상황 문구 여러 개를 ZERO에 동시에 묻는다. ZERO는 자유 텍스트 설명(캡셔닝)을
+만들어주는 VLM이 아니라 개방형
 어휘(open-vocabulary) 탐지 모델이다(`client.foundation.list()`로 실제 확인함 — 이
 테넌트에는 "zero" 하나만 등록돼 있고 별도 VLM 캡셔닝 엔드포인트는 없음). 그래서
 "자유 문장 생성"이 아니라 "짧은 우려 문구들을 프롬프트로 던져서 걸린 것만 문장으로
@@ -33,30 +33,14 @@ logger = logging.getLogger(__name__)
 # 카테고리 예시(쓰러짐/연기에 갇힘 2종)에 맞춰 정리했다.
 PROLONGED_PRESENCE_PROMPTS = ["쓰러진 사람", "연기에 둘러싸인 사람"]
 
-# 관리구역 종류별로 확인하고 싶은 우려 상황들 (같은 변화감지 결과라도 종류에 따라 원인 문구가 다름).
-CLEARANCE_ZONE_PROMPTS: dict[str, list[str]] = {
-    "fire_extinguisher": ["소화기를 가리는 박스", "쌓여있는 적재물", "소화기 앞을 막은 물건"],
-    "electrical_panel": ["가려진 전기패널", "전기패널 앞에 쌓인 물건"],
-    "emergency_exit": ["막힌 비상구", "비상구 앞에 쌓인 물건", "닫힌 문"],
-}
-
 # ZERO는 한글 프롬프트를 사실상 인식하지 못한다(2026-08-02 실측: LastSight_Demo.mp4 프레임에서
 # "사람"/"쓰러진 사람"은 항상 0건인데 "person"/"fallen person"은 정상 인식 — 어휘가 영어
 # 위주). 그래서 위 한글 문구(카테고리명, CLAUDE.md 4-3에 정의된 고정 값)는 API·로그에 그대로
 # 쓰되, ZERO에 실제로 보내는 프롬프트만 검증된 영어로 바꿔치기하고 결과를 다시 한글로 매핑한다.
-# "쓰러진 사람"/"person"류는 실측 확인(0.4~0.58), 관리구역 문구는 같은 전략으로 번역만 하고
-# 이 데모 영상엔 해당 장면이 없어 아직 실측 검증은 못 했다 — 실제 사용 전 스팟체크 권장.
+# "쓰러진 사람"/"person"류는 실측 확인(0.4~0.58).
 _KOREAN_TO_ZERO_PROMPT: dict[str, str] = {
     "쓰러진 사람": "fallen person",
     "연기에 둘러싸인 사람": "distressed person in smoke",
-    "소화기를 가리는 박스": "boxes blocking a fire extinguisher",
-    "쌓여있는 적재물": "stacked pallets blocking access",
-    "소화기 앞을 막은 물건": "object blocking a fire extinguisher",
-    "가려진 전기패널": "obstructed electrical panel",
-    "전기패널 앞에 쌓인 물건": "boxes stacked in front of an electrical panel",
-    "막힌 비상구": "blocked emergency exit",
-    "비상구 앞에 쌓인 물건": "boxes blocking an emergency exit",
-    "닫힌 문": "closed door",
 }
 
 

@@ -1,4 +1,4 @@
-import type { ComplianceState, PpeViolationEntry, ScenarioSnapshot, SituationSummary, ZoneMapConfig } from "./types";
+import type { ChatMessage, ChatReply, ComplianceState, PpeViolationEntry, ScenarioSnapshot, ZoneMapConfig } from "./types";
 
 // 배포(Render 등)에서는 백엔드가 프론트엔드 빌드를 그대로 서빙해 같은 오리진이므로
 // 상대 경로("")면 충분하다 — 로컬 개발(vite dev server, 5173)만 별도 오리진(8000)의
@@ -37,9 +37,13 @@ export async function fetchZoneMap(cameraId: string): Promise<ZoneMapConfig> {
   return res.json();
 }
 
-export async function fetchSituationSummary(): Promise<SituationSummary> {
-  const res = await fetch(`${API_BASE}/situation-summary`, { method: "POST" });
-  if (!res.ok) throw new Error("브리핑 요약을 생성하지 못했습니다.");
+export async function sendChatMessage(messages: ChatMessage[]): Promise<ChatReply> {
+  const res = await fetch(`${API_BASE}/situation-chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(messages.map((m) => ({ role: m.role, content: m.content }))),
+  });
+  if (!res.ok) throw new Error("답변을 생성하지 못했습니다.");
   return res.json();
 }
 

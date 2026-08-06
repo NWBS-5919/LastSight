@@ -2,7 +2,7 @@ import { useState } from "react";
 import { frameUrl, reviewPpeViolation } from "../api";
 import type { ComplianceState, PpeViolationEntry } from "../types";
 
-const BOX_COLOR: Record<string, string> = { worn: "#4ade80", not_worn: "#ff2d2d", unknown: "#e8e8ec" };
+const BOX_COLOR: Record<string, string> = { worn: "var(--ok)", not_worn: "var(--danger)", unknown: "var(--overlay-neutral)" };
 
 function effectiveHelmet(entry: PpeViolationEntry): ComplianceState {
   return entry.reviewed_helmet ?? entry.helmet_state ?? "unknown";
