@@ -10,12 +10,14 @@ import {
   Flame,
   HardHat,
   MapPinned,
+  MessageSquareText,
   Play,
   RefreshCcw,
   ShieldCheck,
   Sparkles,
   Users,
   Video,
+  X,
 } from "lucide-react";
 import "./App.css";
 import { DEMO_VIDEO_URL, fetchZoneMap, resetScenario, startScenario } from "./api";
@@ -87,6 +89,7 @@ function App() {
   const [selectedAt, setSelectedAt] = useState<string | null>(null);
   const [selectedPpeId, setSelectedPpeId] = useState<string | null>(null);
   const [showFireAlert, setShowFireAlert] = useState(false);
+  const [showSituationChat, setShowSituationChat] = useState(false);
   const [zoneMap, setZoneMap] = useState<ZoneMapConfig | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const emergencyRedirected = useRef(false);
@@ -395,12 +398,6 @@ function App() {
               <div className="worker-grid emergency-grid">{situationIntervalsNewestFirst.map((interval) => <SituationCard key={interval.start.at} interval={interval} fireTriggeredAt={snapshot.fire_alert?.triggered_at ?? null} onClick={() => setSelectedAt(interval.end.at)} />)}</div>
             )}
           </section>
-          <section className="surface-card emergency-briefing-card">
-            <div className="section-heading">
-              <div><span className="section-heading__eyebrow">AI RESCUE BRIEFING</span><h2>AI 구조 브리핑</h2></div>
-            </div>
-            <SituationChatPanel />
-          </section>
         </>
       )}
     </>
@@ -425,6 +422,9 @@ function App() {
             <span>{NAV_ITEMS.find((item) => item.id === activeTab)?.label}</span>
           </div>
           <div className="topbar__actions">
+            <button type="button" className="secondary-button topbar-chat-button" onClick={() => setShowSituationChat(true)} aria-haspopup="dialog">
+              <MessageSquareText size={17} /> <span>구조 브리핑 챗봇</span>
+            </button>
             <button type="button" className="secondary-button" onClick={handleResetScenario}><RefreshCcw size={16} /> 초기화</button>
             <button type="button" className="primary-button" onClick={handleStartScenario} disabled={scenarioActive}><Play size={16} fill="currentColor" /> {scenarioStarting ? "연결 중" : snapshot.running ? "시나리오 실행 중" : "시나리오 시작"}</button>
           </div>
@@ -452,6 +452,15 @@ function App() {
       {showFireAlert && snapshot.fire_alert && <FireAlertModal alert={snapshot.fire_alert} onClose={() => setShowFireAlert(false)} />}
       {selectedEntry && <SituationDetailModal entry={selectedEntry} frameWidth={snapshot.frame_width} frameHeight={snapshot.frame_height} rangeStartAt={selectedInterval?.start.at} sampleCount={selectedInterval?.sampleCount} fireTriggeredAt={snapshot.fire_alert?.triggered_at ?? null} onClose={() => setSelectedAt(null)} />}
       {selectedPpeEntry && <PpeViolationEditModal entry={selectedPpeEntry} cameraId={DEMO_CAMERA_ID} frameWidth={snapshot.frame_width} frameHeight={snapshot.frame_height} onClose={() => setSelectedPpeId(null)} onSaved={() => setLiveRefreshKey((key) => key + 1)} />}
+      <div className={`chat-drawer-backdrop ${showSituationChat ? "is-open" : ""}`} onClick={() => setShowSituationChat(false)} aria-hidden={!showSituationChat}>
+        <aside className="chat-drawer" role="dialog" aria-modal="true" aria-labelledby="chat-drawer-title" onClick={(event) => event.stopPropagation()}>
+          <div className="chat-drawer__header">
+            <div><span>AI RESCUE BRIEFING</span><h2 id="chat-drawer-title">구조 브리핑 챗봇</h2></div>
+            <button type="button" onClick={() => setShowSituationChat(false)} aria-label="구조 브리핑 챗봇 닫기"><X size={21} /></button>
+          </div>
+          <SituationChatPanel />
+        </aside>
+      </div>
     </div>
   );
 }

@@ -2087,10 +2087,87 @@
   flex: 0 0 auto;
 }
 
-.emergency-briefing-card > .chat-panel {
+.chat-drawer-backdrop {
+  position: fixed;
+  z-index: 120;
+  inset: 0;
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px;
+  visibility: hidden;
+  pointer-events: none;
+  opacity: 0;
+  background: rgba(7, 23, 31, 0.44);
+  backdrop-filter: blur(3px);
+  transition: opacity 180ms ease, visibility 180ms ease;
+}
+
+.chat-drawer-backdrop.is-open {
+  visibility: visible;
+  pointer-events: auto;
+  opacity: 1;
+}
+
+.chat-drawer {
+  width: min(480px, 100%);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--panel);
+  box-shadow: var(--shadow-lg);
+  transform: translateX(calc(100% + 24px));
+  transition: transform 220ms ease;
+}
+
+.chat-drawer-backdrop.is-open .chat-drawer {
+  transform: translateX(0);
+}
+
+.chat-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.chat-drawer__header span {
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.chat-drawer__header h2 {
+  margin: 4px 0 0;
+  color: var(--navy-strong);
+  font-size: 20px;
+}
+
+.chat-drawer__header button {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-dim);
+  background: var(--panel-alt);
+}
+
+.chat-drawer > .chat-panel {
   width: 100%;
   max-width: none;
-  min-height: 420px;
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .worker-grid,
@@ -2459,6 +2536,17 @@
     display: none;
   }
 
+  .topbar__actions .topbar-chat-button {
+    width: 42px;
+    min-width: 42px;
+    display: inline-flex;
+    padding: 0;
+  }
+
+  .topbar-chat-button span {
+    display: none;
+  }
+
   .topbar__actions .primary-button {
     width: 42px;
     min-width: 42px;
@@ -2526,6 +2614,16 @@
 }
 
 @media (max-width: 560px) {
+  .chat-drawer-backdrop {
+    padding: 0;
+  }
+
+  .chat-drawer {
+    width: 100%;
+    border-width: 0;
+    border-radius: 0;
+  }
+
   .metric-grid,
   .stat-row,
   .zone-card-grid,
