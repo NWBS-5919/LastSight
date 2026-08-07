@@ -2087,7 +2087,7 @@
   flex: 0 0 auto;
 }
 
-.timeline-page-card > .chat-panel {
+.emergency-briefing-card > .chat-panel {
   width: 100%;
   max-width: none;
   min-height: 420px;

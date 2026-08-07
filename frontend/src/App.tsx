@@ -349,12 +349,6 @@ function App() {
           <EmptyState icon={<Clock3 size={28} />} title="타임라인이 비어 있습니다" description="시나리오를 시작하면 모든 주요 이벤트가 시간순으로 연결됩니다." action={<button type="button" className="primary-button" onClick={handleStartScenario} disabled={scenarioActive}><Play size={17} /> {scenarioStarting ? "연결 중" : "시나리오 시작"}</button>} />
         )}
       </section>
-      <section className="surface-card timeline-page-card">
-        <div className="section-heading">
-          <div><span className="section-heading__eyebrow">AI BRIEFING</span><h2>구조 브리핑 챗봇</h2></div>
-        </div>
-        <SituationChatPanel />
-      </section>
     </>
   );
 
@@ -400,6 +394,12 @@ function App() {
             ) : (
               <div className="worker-grid emergency-grid">{situationIntervalsNewestFirst.map((interval) => <SituationCard key={interval.start.at} interval={interval} fireTriggeredAt={snapshot.fire_alert?.triggered_at ?? null} onClick={() => setSelectedAt(interval.end.at)} />)}</div>
             )}
+          </section>
+          <section className="surface-card emergency-briefing-card">
+            <div className="section-heading">
+              <div><span className="section-heading__eyebrow">AI RESCUE BRIEFING</span><h2>AI 구조 브리핑</h2></div>
+            </div>
+            <SituationChatPanel />
           </section>
         </>
       )}
