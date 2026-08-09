@@ -1,4 +1,5 @@
 import type { PpeViolationEntry } from "../types";
+import { frameUrl } from "../api";
 
 interface Props {
   entry: PpeViolationEntry;
@@ -22,18 +23,22 @@ export function PpeViolationCard({ entry, onClick }: Props) {
 
   return (
     <button className={`worker-card ${stillViolation ? "worker-card--prolonged_presence" : ""}`} onClick={onClick}>
-      <div className="worker-card__header">
-        <span className="worker-card__id">{new Date(entry.at).toLocaleTimeString("ko-KR")}</span>
-        <span className={`badge ${stillViolation ? "badge--prolonged_presence" : ""}`}>
-          {reviewed ? "검토 완료" : stillViolation ? "미착용" : "정정됨"}
-        </span>
+      <div className="worker-card__media">
+        {entry.frame_path ? <img src={frameUrl(entry.frame_path)} alt={`${entry.zone ?? "구역 미상"} PPE 감지 프레임`} /> : <span>CCTV 참고 프레임</span>}
+        <i className={stillViolation ? "is-danger" : "is-ok"} aria-hidden="true" />
       </div>
-      <div className="worker-card__body">
-        <div>구역: {entry.zone ?? "정보 없음"}</div>
-        <div>안전모: {STATE_LABEL[helmet ?? "unknown"]}</div>
-        <div>안전조끼: {STATE_LABEL[vest ?? "unknown"]}</div>
+      <div className="worker-card__content">
+        <div className="worker-card__header">
+          <span className="worker-card__id">{entry.zone ?? "구역 미상"} · {new Date(entry.at).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}</span>
+          <span className={`badge ${stillViolation ? "badge--prolonged_presence" : ""}`}>
+            {reviewed ? "관리자 확인" : stillViolation ? "검토 필요" : "정정됨"}
+          </span>
+        </div>
+        <div className="worker-card__body">
+          <div>{helmet === "not_worn" && vest === "not_worn" ? "안전모·조끼 미착용" : helmet === "not_worn" ? "안전모 미착용" : vest === "not_worn" ? "조끼 미착용" : `안전모 ${STATE_LABEL[helmet ?? "unknown"]} · 조끼 ${STATE_LABEL[vest ?? "unknown"]}`}</div>
+        </div>
+        <div className="worker-card__disclaimer">AI 신뢰도 {entry.confidence != null ? `${Math.round(entry.confidence * 100)}%` : "확인 중"} · 클릭하여 판정 검토</div>
       </div>
-      <div className="worker-card__disclaimer">{reviewed ? "관리자 검토 완료" : "추정 정보 — 확정 아님, 클릭해서 검토"}</div>
     </button>
   );
 }

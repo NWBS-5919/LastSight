@@ -14,7 +14,9 @@ app = FastAPI(title="LastSight AI API")
 # 배포 전에는 실제 프론트엔드 도메인으로 좁혀야 함.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    # localhost와 127.0.0.1은 브라우저에서 서로 다른 origin이다. Vite가 어느 주소로
+    # 열렸든 PPE 검토(PATCH)·병합(POST)의 preflight가 통과하도록 둘 다 허용한다.
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
     allow_methods=["*"],
     allow_headers=["*"],
 )

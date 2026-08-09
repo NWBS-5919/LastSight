@@ -78,7 +78,10 @@ export function SituationChatPanel() {
 
       {lightboxSrc && (
         <div className="modal-backdrop" onClick={() => setLightboxSrc(null)}>
-          <img className="chat-panel__lightbox-image" src={lightboxSrc} alt="확대된 참고 프레임" onClick={(e) => e.stopPropagation()} />
+          <div className="chat-panel__lightbox" onClick={(e) => e.stopPropagation()}>
+            <img className="chat-panel__lightbox-image" src={lightboxSrc} alt="확대된 참고 프레임" />
+            <button type="button" onClick={() => setLightboxSrc(null)}>닫기 ×</button>
+          </div>
         </div>
       )}
     </div>

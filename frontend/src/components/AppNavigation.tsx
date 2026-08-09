@@ -1,25 +1,19 @@
-import {
-  Activity,
-  AlertTriangle,
-  ClipboardCheck,
-  LayoutDashboard,
-  ShieldCheck,
-  Video,
-} from "lucide-react";
+import saivLogo from "../assets/figma/saiv-logo.png";
+import { FigmaIcon, type FigmaIconName } from "./FigmaIcon";
 
 export type TabId = "overview" | "monitoring" | "timeline" | "ppe" | "emergency";
 
 export const NAV_ITEMS = [
-  { id: "overview", label: "안전 현황", shortLabel: "현황", icon: LayoutDashboard },
-  { id: "monitoring", label: "실시간 관제", shortLabel: "관제", icon: Video },
-  { id: "timeline", label: "통합 타임라인", shortLabel: "기록", icon: Activity },
-  { id: "ppe", label: "PPE 검토", shortLabel: "PPE", icon: ClipboardCheck },
-  { id: "emergency", label: "비상 대응", shortLabel: "비상", icon: AlertTriangle },
+  { id: "overview", label: "안전 현황", shortLabel: "현황", icon: "safetyNav" },
+  { id: "monitoring", label: "실시간 관제", shortLabel: "관제", icon: "cameraNav" },
+  { id: "timeline", label: "통합 타임라인", shortLabel: "기록", icon: "timelineNav" },
+  { id: "ppe", label: "PPE 검토", shortLabel: "PPE", icon: "ppeNav" },
+  { id: "emergency", label: "비상 대응", shortLabel: "비상", icon: "emergency" },
 ] as const satisfies ReadonlyArray<{
   id: TabId;
   label: string;
   shortLabel: string;
-  icon: typeof LayoutDashboard;
+  icon: FigmaIconName;
 }>;
 
 interface Props {
@@ -42,7 +36,6 @@ function NavItems({
   return (
     <nav className={mobile ? "mobile-nav__items" : "side-nav"} aria-label="주요 화면">
       {NAV_ITEMS.map((item) => {
-        const Icon = item.icon;
         const count = item.id === "ppe" ? ppeCount : item.id === "emergency" ? situationCount : null;
         return (
           <button
@@ -53,7 +46,7 @@ function NavItems({
             aria-current={activeTab === item.id ? "page" : undefined}
           >
             <span className="nav-icon-wrap">
-              <Icon size={mobile ? 19 : 20} strokeWidth={1.9} aria-hidden="true" />
+              <FigmaIcon name={item.icon} size={mobile ? 19 : item.id === "overview" || item.id === "monitoring" ? 22 : 23} />
               {mobile && count != null && count > 0 && <span className="mobile-nav__dot" />}
             </span>
             <span>{mobile ? item.shortLabel : item.label}</span>
@@ -70,11 +63,7 @@ export function AppNavigation(props: Props) {
     <>
       <aside className="sidebar">
         <div className="brand">
-          <span className="brand__mark"><ShieldCheck size={24} strokeWidth={2.1} /></span>
-          <span>
-            <strong>LastSight</strong>
-            <small>AI Safety Console</small>
-          </span>
+          <img src={saivLogo} alt="SAIV Safety AI Vision" />
         </div>
 
         <div className={`mode-card ${props.emergencyMode ? "mode-card--emergency" : ""}`}>
@@ -88,11 +77,8 @@ export function AppNavigation(props: Props) {
         <NavItems {...props} />
 
         <div className="sidebar__footer">
-          <span className={`connection-dot ${props.running ? "is-live" : ""}`} />
-          <span>
-            <strong>{props.running ? "데모 시나리오 실행 중" : "시스템 연결됨"}</strong>
-            <small>CAM-01 · demo-camera</small>
-          </span>
+          <span><FigmaIcon name="connected" size={16} /><strong>{props.running ? "데모 시나리오 실행 중" : "시스템 연결됨"}</strong></span>
+          <span><FigmaIcon name="cctvFooter" size={16.5} /><small>CAM-01 · demo-camera</small></span>
         </div>
       </aside>
 

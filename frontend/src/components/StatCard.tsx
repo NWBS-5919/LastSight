@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { FigmaIcon } from "./FigmaIcon";
 
 interface Props {
   label: string;
@@ -16,6 +17,7 @@ export function StatCard({ label, value, tone = "default", detail, icon, onClick
         <div className="stat-card__label">{label}</div>
         {icon && <span className="stat-card__icon">{icon}</span>}
       </div>
+      {onClick && <FigmaIcon name="arrow" size={25} className="stat-card__arrow" />}
       <div className="stat-card__value">{value}</div>
       {detail && <div className="stat-card__detail">{detail}</div>}
     </>

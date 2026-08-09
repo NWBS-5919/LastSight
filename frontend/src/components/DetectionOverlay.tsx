@@ -70,7 +70,12 @@ function Box({
 
 export function DetectionOverlay({ detections, frameWidth, frameHeight, complianceBoxes = [], emergencyMode = false }: Props) {
   return (
-    <svg className="detection-overlay" viewBox={`0 0 ${frameWidth} ${frameHeight}`} preserveAspectRatio="none">
+    <svg
+      className="detection-overlay"
+      viewBox={`0 0 ${frameWidth} ${frameHeight}`}
+      preserveAspectRatio="xMidYMid meet"
+      aria-hidden="true"
+    >
       {detections
         .filter((d) => d.object_class === "fire" || d.object_class === "smoke")
         .map((d, i) => {

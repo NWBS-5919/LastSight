@@ -11,10 +11,10 @@
   --text-faint: #93a2a9;
   --navy: #12384a;
   --navy-strong: #0d2c3b;
-  --accent: #2d778f;
-  --accent-hover: #23667c;
-  --accent-dim: #d8ebf0;
-  --accent-bg: #edf7f9;
+  --accent: #2d598f;
+  --accent-hover: #244a78;
+  --accent-dim: #dce9f7;
+  --accent-bg: #eef5fd;
   --danger: #d5483f;
   --danger-strong: #af332d;
   --danger-bg: #fff0ee;
@@ -81,7 +81,7 @@ button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 3px solid rgba(45, 119, 143, 0.22);
+  outline: 3px solid rgba(45, 89, 143, 0.22);
   outline-offset: 2px;
 }
 
