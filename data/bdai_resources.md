@@ -13,8 +13,8 @@
 
 | 이름 | project_id | 클래스 | 어노테이션 수 |
 |---|---|---|---|
-| LastSight PPE (person/helmet/vest) | `ddc1dbe2-104c-4c4b-8741-68c5563733c7` | person(6,600) · helmet(5,164) · vest(5,209) | 16,973 |
-| LastSight Fire/Smoke | `abad271f-68e8-4f63-a37a-f53e04b532d6` | fire(10,318) · smoke(13,328) | 23,646 |
+| SAIV PPE (person/helmet/vest) | `ddc1dbe2-104c-4c4b-8741-68c5563733c7` | person(6,600) · helmet(5,164) · vest(5,209) | 16,973 |
+| SAIV Fire/Smoke | `abad271f-68e8-4f63-a37a-f53e04b532d6` | fire(10,318) · smoke(13,328) | 23,646 |
 
 ## 사용한 소스 데이터
 

@@ -1,4 +1,4 @@
-# LastSight AI
+# SAIV (SafeAIVision)
 
 SuperB AI × BDAI 해커톤 — 산업안전·물류 트랙. 자세한 배경·규칙은 `CLAUDE.md`와 `docs/`를 참고.
 
@@ -28,12 +28,12 @@ SuperB AI × BDAI 해커톤 — 산업안전·물류 트랙. 자세한 배경·�
 
 ## 시작하기
 
-필요한 것: [conda](https://docs.conda.io/)(Miniconda로 충분), Node.js 20 이상. 저장소를 클론하면 데모에 필요한 것(사전계산된 프레임·시나리오 데이터)이 이미 다 들어있어서, 아래 순서만 따라 하면 별도 데이터 준비 없이 바로 뜬다 — 원본 데모 영상(`LastSight_Demo.mp4`, 200MB+)은 용량 때문에 git에 안 올렸지만, 프론트엔드가 자동으로 GitHub Release에서 직접 스트리밍해오므로 로컬에 따로 받아둘 필요도 없다.
+필요한 것: [conda](https://docs.conda.io/)(Miniconda로 충분), Node.js 20 이상. 저장소를 클론하면 데모에 필요한 것(사전계산된 프레임·시나리오 데이터)이 이미 다 들어있어서, 아래 순서만 따라 하면 별도 데이터 준비 없이 바로 뜬다 — 원본 데모 영상(`SAIV_Demo.mp4`, 200MB+)은 용량 때문에 git에 안 올렸지만, 프론트엔드가 자동으로 GitHub Release에서 직접 스트리밍해오므로 로컬에 따로 받아둘 필요도 없다.
 
 ```bash
 # 0. 저장소 클론 (아직 안 했다면)
-git clone https://github.com/NWBS-5919/LastSight.git
-cd LastSight
+git clone https://github.com/NWBS-5919/SAIV.git
+cd SAIV
 
 # 1. 파이썬 환경
 conda env create -f environment.yml
