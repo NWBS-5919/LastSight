@@ -55,7 +55,7 @@ export function SituationDetailModal({
           <div className="modal-detail-media">
             {entry.frame_path ? <div className="briefing-card__image-frame">
               <img className="briefing-card__image" src={frameUrl(entry.frame_path)} alt="2차 확인 프레임" />
-              <svg className="briefing-card__image-overlay" viewBox={`0 0 ${frameWidth} ${frameHeight}`} preserveAspectRatio="none">
+              <svg className="briefing-card__image-overlay" viewBox={`0 0 ${frameWidth} ${frameHeight}`} preserveAspectRatio="xMidYMid meet">
                 {boxes.map((b, i) => {
                   const [x1, y1, x2, y2] = b.bbox_xyxy;
                   const color = categoryColor(b.category);

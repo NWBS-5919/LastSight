@@ -367,7 +367,7 @@ function App() {
         <section className="surface-card"><EmptyState icon={<HardHat size={30} />} title="검토할 PPE 기록이 없습니다" description="시나리오 실행 중 미착용이 감지되면 근거 사진과 함께 카드가 생성됩니다." /></section>
       ) : (
         <div className="worker-grid review-grid">
-          {ppeEventsNewestFirst.map((entry) => <PpeViolationCard key={entry.id} entry={entry} onClick={() => setSelectedPpeId(entry.id)} />)}
+          {ppeEventsNewestFirst.map((entry) => <PpeViolationCard key={entry.id} entry={entry} frameWidth={snapshot.frame_width} frameHeight={snapshot.frame_height} onClick={() => setSelectedPpeId(entry.id)} />)}
         </div>
       )}
     </>

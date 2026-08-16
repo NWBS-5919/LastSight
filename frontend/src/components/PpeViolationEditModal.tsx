@@ -61,7 +61,7 @@ export function PpeViolationEditModal({
               <div className="briefing-card__image-frame">
                 <img className="briefing-card__image" src={frameUrl(entry.frame_path)} alt="PPE 위반 감지 프레임" />
                 {entry.bbox_xyxy && (
-                  <svg className="briefing-card__image-overlay" viewBox={`0 0 ${frameWidth} ${frameHeight}`} preserveAspectRatio="none">
+                  <svg className="briefing-card__image-overlay" viewBox={`0 0 ${frameWidth} ${frameHeight}`} preserveAspectRatio="xMidYMid meet">
                     <rect
                       x={entry.bbox_xyxy[0]}
                       y={entry.bbox_xyxy[1]}

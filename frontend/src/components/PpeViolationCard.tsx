@@ -3,6 +3,8 @@ import { frameUrl } from "../api";
 
 interface Props {
   entry: PpeViolationEntry;
+  frameWidth: number;
+  frameHeight: number;
   onClick?: () => void;
 }
 
@@ -15,7 +17,7 @@ function effectiveVest(entry: PpeViolationEntry) {
   return entry.reviewed_vest ?? entry.vest_state;
 }
 
-export function PpeViolationCard({ entry, onClick }: Props) {
+export function PpeViolationCard({ entry, frameWidth, frameHeight, onClick }: Props) {
   const helmet = effectiveHelmet(entry);
   const vest = effectiveVest(entry);
   const stillViolation = helmet === "not_worn" || vest === "not_worn";
@@ -25,7 +27,19 @@ export function PpeViolationCard({ entry, onClick }: Props) {
     <button className={`worker-card ${stillViolation ? "worker-card--prolonged_presence" : ""}`} onClick={onClick}>
       <div className="worker-card__media">
         {entry.frame_path ? <img src={frameUrl(entry.frame_path)} alt={`${entry.zone ?? "구역 미상"} PPE 감지 프레임`} /> : <span>CCTV 참고 프레임</span>}
-        <i className={stillViolation ? "is-danger" : "is-ok"} aria-hidden="true" />
+        {entry.bbox_xyxy && (
+          <svg className="worker-card__media-overlay" viewBox={`0 0 ${frameWidth} ${frameHeight}`} preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+            <rect
+              x={entry.bbox_xyxy[0]}
+              y={entry.bbox_xyxy[1]}
+              width={Math.max(0, entry.bbox_xyxy[2] - entry.bbox_xyxy[0])}
+              height={Math.max(0, entry.bbox_xyxy[3] - entry.bbox_xyxy[1])}
+              fill="none"
+              stroke={stillViolation ? "#f04d45" : "#39b980"}
+              strokeWidth={Math.max(2, frameWidth / 250)}
+            />
+          </svg>
+        )}
       </div>
       <div className="worker-card__content">
         <div className="worker-card__header">
