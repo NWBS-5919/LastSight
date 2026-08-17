@@ -1,24 +1,24 @@
 import type { CSSProperties } from "react";
-import area from "../assets/figma/area.svg";
-import arrow from "../assets/figma/arrow.svg";
-import cameraNav from "../assets/figma/camera-nav.svg";
-import cctvFooter from "../assets/figma/cctv-footer.svg";
-import chatAi from "../assets/figma/chat-ai.svg";
-import connected from "../assets/figma/connected.svg";
-import emergency from "../assets/figma/emergency.svg";
-import people1 from "../assets/figma/people-1.svg";
-import people2 from "../assets/figma/people-2.svg";
-import people3 from "../assets/figma/people-3.svg";
-import ppe from "../assets/figma/ppe.svg";
-import ppeNav from "../assets/figma/ppe-nav.svg";
-import safetyNav from "../assets/figma/safety-nav.svg";
-import settings from "../assets/figma/settings.svg";
-import summaryAlarm from "../assets/figma/summary-alarm.svg";
-import summaryPpe from "../assets/figma/summary-ppe.svg";
-import summaryReport1 from "../assets/figma/summary-report-1.svg";
-import summaryReport2 from "../assets/figma/summary-report-2.svg";
-import summaryZoom from "../assets/figma/summary-zoom.svg";
-import timelineNav from "../assets/figma/timeline-nav.svg";
+import area from "../assets/figma/area.svg?raw";
+import arrow from "../assets/figma/arrow.svg?raw";
+import cameraNav from "../assets/figma/camera-nav.svg?raw";
+import cctvFooter from "../assets/figma/cctv-footer.svg?raw";
+import chatAi from "../assets/figma/chat-ai.svg?raw";
+import connected from "../assets/figma/connected.svg?raw";
+import emergency from "../assets/figma/emergency.svg?raw";
+import people1 from "../assets/figma/people-1.svg?raw";
+import people2 from "../assets/figma/people-2.svg?raw";
+import people3 from "../assets/figma/people-3.svg?raw";
+import ppe from "../assets/figma/ppe.svg?raw";
+import ppeNav from "../assets/figma/ppe-nav.svg?raw";
+import safetyNav from "../assets/figma/safety-nav.svg?raw";
+import settings from "../assets/figma/settings.svg?raw";
+import summaryAlarm from "../assets/figma/summary-alarm.svg?raw";
+import summaryPpe from "../assets/figma/summary-ppe.svg?raw";
+import summaryReport1 from "../assets/figma/summary-report-1.svg?raw";
+import summaryReport2 from "../assets/figma/summary-report-2.svg?raw";
+import summaryZoom from "../assets/figma/summary-zoom.svg?raw";
+import timelineNav from "../assets/figma/timeline-nav.svg?raw";
 
 export type FigmaIconName =
   | "area" | "arrow" | "cameraNav" | "cctvFooter" | "chatAi" | "connected"
@@ -68,15 +68,13 @@ interface Props {
   decorative?: boolean;
 }
 
-function IconGlyph({ src, inset = 0 }: { src: string; inset?: CSSProperties["inset"] }) {
+function IconGlyph({ source, inset = 0 }: { source: string; inset?: CSSProperties["inset"] }) {
+  const colorableSource = source.replace(/fill="#[0-9a-f]{6}"/gi, 'fill="currentColor"');
   return (
     <span
       className="figma-icon__glyph"
-      style={{
-        inset,
-        WebkitMaskImage: `url(${src})`,
-        maskImage: `url(${src})`,
-      }}
+      style={{ inset }}
+      dangerouslySetInnerHTML={{ __html: colorableSource }}
     />
   );
 }
@@ -86,19 +84,19 @@ export function FigmaIcon({ name, size = 24, className = "", decorative = true }
   if (name === "people") {
     return (
       <span className={`figma-icon ${className}`} style={{ width: size, height: size }} role={decorative ? undefined : "img"} aria-label={label} aria-hidden={decorative || undefined}>
-        <IconGlyph src={people1} inset="54.71% 4.17% 16.67% 69.46%" />
-        <IconGlyph src={people2} inset="16.67% 45.83% 50% 20.83%" />
-        <IconGlyph src={people3} inset="16.67% 20.83% 16.67% 4.17%" />
+        <IconGlyph source={people1} inset="54.71% 4.17% 16.67% 69.46%" />
+        <IconGlyph source={people2} inset="16.67% 45.83% 50% 20.83%" />
+        <IconGlyph source={people3} inset="16.67% 20.83% 16.67% 4.17%" />
       </span>
     );
   }
   if (name === "summaryReport") {
     return (
       <span className={`figma-icon ${className}`} style={{ width: size, height: size }} role={decorative ? undefined : "img"} aria-label={label} aria-hidden={decorative || undefined}>
-        <IconGlyph src={summaryReport1} inset="40.63% 31.25% 21.88%" />
-        <IconGlyph src={summaryReport2} inset="6.25% 15.63%" />
+        <IconGlyph source={summaryReport1} inset="40.63% 31.25% 21.88%" />
+        <IconGlyph source={summaryReport2} inset="6.25% 15.63%" />
       </span>
     );
   }
-  return <span className={`figma-icon ${className}`} style={{ width: size, height: size }} role={decorative ? undefined : "img"} aria-label={label} aria-hidden={decorative || undefined}><IconGlyph src={SIMPLE_ICONS[name]!} inset={ICON_INSETS[name] ?? 0} /></span>;
+  return <span className={`figma-icon ${className}`} style={{ width: size, height: size }} role={decorative ? undefined : "img"} aria-label={label} aria-hidden={decorative || undefined}><IconGlyph source={SIMPLE_ICONS[name]!} inset={ICON_INSETS[name] ?? 0} /></span>;
 }
