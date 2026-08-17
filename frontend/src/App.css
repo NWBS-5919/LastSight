@@ -1921,18 +1921,16 @@
   line-height: 0;
 }
 
-.figma-icon__glyph {
+.figma-icon__asset {
   position: absolute;
-  display: block;
-  color: inherit;
-  line-height: 0;
+  width: auto;
+  height: auto;
+  max-width: none;
 }
 
-.figma-icon__glyph > svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
+.figma-icon__asset--emergency { display: none; }
+.app-shell--emergency .figma-icon--dual > .figma-icon__asset--normal { display: none; }
+.app-shell--emergency .figma-icon--dual > .figma-icon__asset--emergency { display: block; }
 
 .zone-guide {
   margin: 4px 0 0;
@@ -2760,7 +2758,7 @@
     width: 200px;
     height: 46px;
     gap: 9px;
-    margin: 17px 0 21px;
+    margin: 24px 0 24px 2px;
     padding: 0 14px;
     border: 1px solid rgba(205, 231, 255, .72);
     border-radius: 5px;
@@ -2781,7 +2779,7 @@
     font-weight: 500;
   }
 
-  .app-shell--normal .side-nav { gap: 5px; }
+  .app-shell--normal .side-nav { gap: 7px; margin-left: 2px; }
   .app-shell--normal .side-nav__item {
     width: 200px;
     min-height: 45px;
@@ -2812,7 +2810,7 @@
     flex-direction: column;
     align-items: stretch;
     gap: 5px;
-    margin: auto 2px 0;
+    margin: auto 4px 0;
     padding: 17px 0 0;
     border-color: rgba(255,255,255,.82);
   }
@@ -2834,7 +2832,7 @@
   .app-shell--normal .topbar {
     position: absolute;
     top: 55px;
-    right: 55px;
+    right: 62px;
     left: auto;
     z-index: 25;
     width: auto;
@@ -2873,7 +2871,7 @@
     width: 100%;
     max-width: none;
     margin: 0;
-    padding: 97px 55px 60px;
+    padding: 97px 40px 60px;
   }
   .app-shell--normal .page-heading {
     display: block;
@@ -2909,9 +2907,12 @@
   .app-shell--normal .metric-grid {
     position: relative;
     grid-template-columns: repeat(4, 271px);
-    gap: 33px;
+    gap: 36px;
+    width: 1087px;
+    max-width: 100%;
+    height: 173px;
     margin: 0 0 55px;
-    padding: 0 0 24px;
+    padding: 0 0 28px;
     overflow-x: auto;
     overflow-y: hidden;
     scroll-snap-type: x proximity;
@@ -2929,13 +2930,13 @@
     position: relative;
     min-height: 137px;
     height: 137px;
-    padding: 15px 14px;
+    padding: 0;
     overflow: hidden;
     scroll-snap-align: start;
   }
   .app-shell--normal .stat-card--warning,
   .app-shell--normal .stat-card--danger { background: rgba(255,255,255,.76); }
-  .app-shell--normal .stat-card__top { justify-content: flex-start; gap: 10px; }
+  .app-shell--normal .stat-card__top { position: absolute; top: 14px; left: 16px; height: 25px; justify-content: flex-start; gap: 10px; }
   .app-shell--normal .stat-card__arrow {
     position: absolute;
     top: 16px;
@@ -2954,7 +2955,7 @@
   .app-shell--normal .stat-card__value {
     position: absolute;
     right: 20px;
-    bottom: 17px;
+    top: 74px;
     margin: 0;
     color: #13252e;
     font-size: 36px;
@@ -2962,8 +2963,8 @@
   }
   .app-shell--normal .stat-card__detail {
     position: absolute;
-    bottom: 20px;
-    left: 14px;
+    top: 103px;
+    left: 16px;
     margin: 0;
     color: #9aafc6;
     font-size: 11px;
@@ -3216,7 +3217,7 @@
     width: 200px;
     height: 46px;
     gap: 9px;
-    margin: 17px 0 21px;
+    margin: 24px 0 24px 2px;
     padding: 0 14px;
     border: 1px solid rgba(248,125,125,.5);
     border-radius: 5px;
@@ -3225,7 +3226,7 @@
   .app-shell--emergency .mode-card small { display: none; }
   .app-shell--emergency .mode-card strong { color: #fff; font-size: 12px; font-weight: 500; }
   .app-shell--emergency .mode-card__pulse { width: 8px; height: 8px; background: rgba(248,125,125,.8); box-shadow: none; }
-  .app-shell--emergency .side-nav { gap: 5px; }
+  .app-shell--emergency .side-nav { gap: 7px; margin-left: 2px; }
   .app-shell--emergency .side-nav__item {
     width: 200px;
     min-height: 45px;
@@ -3245,7 +3246,7 @@
     flex-direction: column;
     align-items: stretch;
     gap: 5px;
-    margin: auto 2px 0;
+    margin: auto 4px 0;
     padding: 17px 0 0;
     border-color: rgba(255,255,255,.82);
   }
@@ -3257,8 +3258,8 @@
   .app-shell--emergency .workspace { position: relative; min-height: 100vh; }
   .app-shell--emergency .topbar {
     position: absolute;
-    top: 59px;
-    right: 55px;
+    top: 60px;
+    right: 62px;
     left: auto;
     z-index: 25;
     width: auto;
@@ -3310,7 +3311,7 @@
   .app-shell--emergency .global-alert > span:nth-child(3) { font-size: 14px; white-space: nowrap; }
   .app-shell--emergency .global-alert > svg { display: none; }
 
-  .app-shell--emergency .page-content { width: 100%; max-width: none; margin: 0; padding: 90px 55px 60px; }
+  .app-shell--emergency .page-content { width: 100%; max-width: none; margin: 0; padding: 97px 40px 60px; }
   .app-shell--emergency .page-heading { display: block; margin: 0 0 31px; }
   .app-shell--emergency .page-heading__eyebrow { display: none; }
   .app-shell--emergency .page-heading h1 { margin: 0 0 5px; color: #2e1313; font-size: 60px; font-weight: 700; line-height: 1.15; letter-spacing: -.045em; }
@@ -3319,22 +3320,21 @@
   .app-shell--emergency .surface-card,
   .app-shell--emergency .stat-card { border: 1px solid rgba(255,255,255,.8); border-radius: 13px; background: rgba(255,255,255,.76); box-shadow: 2px 2px 5px #f5dada, inset 0 1px rgba(255,255,255,.92); }
 
-  .app-shell--emergency .metric-grid { position: relative; grid-template-columns: repeat(4,271px); gap: 33px; margin: 0 0 55px; padding: 0 0 24px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; scrollbar-color: rgba(255,255,255,.96) rgba(202,177,177,.42); }
+  .app-shell--emergency .metric-grid { position: relative; grid-template-columns: repeat(4,271px); gap: 36px; width: 1087px; max-width: 100%; height: 173px; margin: 0 0 55px; padding: 0 0 28px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; scrollbar-color: rgba(255,255,255,.96) rgba(202,177,177,.42); }
   .app-shell--emergency .metric-grid::after { display: none; }
   .app-shell--emergency .metric-grid::-webkit-scrollbar { height: 8px; }
   .app-shell--emergency .metric-grid::-webkit-scrollbar-track { border-radius: 99px; background: rgba(202,177,177,.42); }
   .app-shell--emergency .metric-grid::-webkit-scrollbar-thumb { border-radius: 99px; background: rgba(255,255,255,.96); }
-  .app-shell--emergency .stat-card { position: relative; min-height: 137px; height: 137px; padding: 15px 14px; overflow: hidden; scroll-snap-align: start; }
+  .app-shell--emergency .stat-card { position: relative; min-height: 137px; height: 137px; padding: 0; overflow: hidden; scroll-snap-align: start; }
   .app-shell--emergency .stat-card--warning,
   .app-shell--emergency .stat-card--danger { background: rgba(255,255,255,.76); }
-  .app-shell--emergency .stat-card__top { justify-content: flex-start; gap: 10px; }
-  .app-shell--emergency .stat-card__arrow { position: absolute; top: 16px; right: 16px; color: #8fa1b7; }
-  .app-shell--emergency .stat-card__icon { order: -1; width: 25px; height: 25px; border-radius: 0; color: #8fa1b7; background: transparent; }
-  .app-shell--emergency .stat-card:last-child .stat-card__icon { color: #b78f8f; }
+  .app-shell--emergency .stat-card__top { position: absolute; top: 13px; left: 15px; height: 25px; justify-content: flex-start; gap: 10px; }
+  .app-shell--emergency .stat-card__arrow { position: absolute; top: 15px; right: 17px; color: #b78f8f; }
+  .app-shell--emergency .stat-card__icon { order: -1; width: 25px; height: 25px; border-radius: 0; color: #b78f8f; background: transparent; }
   .app-shell--emergency .stat-card__icon svg { width: 25px; height: 25px; stroke-width: 3; }
   .app-shell--emergency .stat-card__label { color: #b78f8f; font-size: 16px; font-weight: 650; }
-  .app-shell--emergency .stat-card__value { position: absolute; right: 20px; bottom: 17px; margin: 0; color: #13252e; font-size: 36px; font-weight: 700; }
-  .app-shell--emergency .stat-card__detail { position: absolute; bottom: 20px; left: 14px; margin: 0; color: #b78f8f; font-size: 11px; }
+  .app-shell--emergency .stat-card__value { position: absolute; right: 20px; top: 73px; margin: 0; color: #13252e; font-size: 36px; font-weight: 700; }
+  .app-shell--emergency .stat-card__detail { position: absolute; top: 102px; left: 15px; margin: 0; color: #b78f8f; font-size: 11px; }
 
   .app-shell--emergency .overview-grid { grid-template-columns: 326px 574px; justify-content: space-between; gap: 40px; margin: 0; }
   .app-shell--emergency .zone-overview,

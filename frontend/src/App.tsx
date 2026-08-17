@@ -234,7 +234,11 @@ function App() {
 
   const overviewPage = (
     <>
-      <PageHeading eyebrow="OVERVIEW" title={emergencyMode ? "비상 대응 현황" : "오늘의 안전 현황"} description="현장의 주요 상태와 확인이 필요한 항목을 한 눈에 확인할 수 있어요." />
+      <PageHeading
+        eyebrow="OVERVIEW"
+        title="오늘의 안전 현황"
+        description={emergencyMode ? "현장의 주요 상태와 확인이 필요한 항목을 한 화면에서 요약해요." : "현장의 주요 상태와 확인이 필요한 항목을 한 눈에 확인할 수 있어요."}
+      />
       <div
         className="metric-grid"
         tabIndex={0}
@@ -248,7 +252,7 @@ function App() {
         <StatCard label="PPE 미착용" value={`${snapshot.ppe_violations_today}건`} detail={snapshot.ppe_violations_today > 0 ? "관리자 검토 필요" : "신규 위반 없음"} tone={snapshot.ppe_violations_today > 0 ? "warning" : "default"} icon={<FigmaIcon name="ppe" size={25} />} onClick={() => navigate("ppe")} />
         <StatCard label="현재 관측 인원" value={`${snapshot.current_person_compliance.length}명`} detail={`구역 집계 ${observedZoneTotal}명`} icon={<FigmaIcon name="people" size={25} />} onClick={() => navigate("monitoring")} />
         <StatCard label="등록 구역" value={`${registeredZones.length}개`} detail="카메라 분석 구역" icon={<FigmaIcon name="area" size={25} />} onClick={() => navigate("monitoring")} />
-        <StatCard label="시스템 모드" value={emergencyMode ? "비상" : "정상"} detail={emergencyMode ? "전체 화면 비상 상태 동기화" : "모든 분석 기능 연결됨"} tone={emergencyMode ? "danger" : "default"} icon={emergencyMode ? <Flame size={20} /> : <FigmaIcon name="settings" size={24} />} onClick={() => navigate(emergencyMode ? "emergency" : "monitoring")} />
+        <StatCard label="시스템 모드" value={emergencyMode ? "비상" : "정상"} detail={emergencyMode ? "전체 화면 비상 상태 동기화" : "모든 분석 기능 연결됨"} tone={emergencyMode ? "danger" : "default"} icon={<FigmaIcon name="settings" size={24} />} onClick={() => navigate(emergencyMode ? "emergency" : "monitoring")} />
       </div>
 
       <div className="overview-grid">

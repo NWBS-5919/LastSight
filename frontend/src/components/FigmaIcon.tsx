@@ -1,24 +1,31 @@
-import type { CSSProperties } from "react";
-import area from "../assets/figma/area.svg?raw";
-import arrow from "../assets/figma/arrow.svg?raw";
-import cameraNav from "../assets/figma/camera-nav.svg?raw";
-import cctvFooter from "../assets/figma/cctv-footer.svg?raw";
-import chatAi from "../assets/figma/chat-ai.svg?raw";
-import connected from "../assets/figma/connected.svg?raw";
-import emergency from "../assets/figma/emergency.svg?raw";
-import people1 from "../assets/figma/people-1.svg?raw";
-import people2 from "../assets/figma/people-2.svg?raw";
-import people3 from "../assets/figma/people-3.svg?raw";
-import ppe from "../assets/figma/ppe.svg?raw";
-import ppeNav from "../assets/figma/ppe-nav.svg?raw";
-import safetyNav from "../assets/figma/safety-nav.svg?raw";
-import settings from "../assets/figma/settings.svg?raw";
-import summaryAlarm from "../assets/figma/summary-alarm.svg?raw";
-import summaryPpe from "../assets/figma/summary-ppe.svg?raw";
-import summaryReport1 from "../assets/figma/summary-report-1.svg?raw";
-import summaryReport2 from "../assets/figma/summary-report-2.svg?raw";
-import summaryZoom from "../assets/figma/summary-zoom.svg?raw";
-import timelineNav from "../assets/figma/timeline-nav.svg?raw";
+import area from "../assets/figma/area.svg";
+import arrow from "../assets/figma/arrow.svg";
+import cameraNav from "../assets/figma/camera-nav.svg";
+import cctvFooter from "../assets/figma/cctv-footer.svg";
+import chatAi from "../assets/figma/chat-ai.svg";
+import connected from "../assets/figma/connected.svg";
+import emergency from "../assets/figma/emergency.svg";
+import emergencyArea from "../assets/figma/emergency/area.svg";
+import emergencyArrow from "../assets/figma/emergency/arrow.svg";
+import emergencyChatAi from "../assets/figma/emergency/chat-ai.svg";
+import emergencyPeople1 from "../assets/figma/emergency/people-1.svg";
+import emergencyPeople2 from "../assets/figma/emergency/people-2.svg";
+import emergencyPeople3 from "../assets/figma/emergency/people-3.svg";
+import emergencyPpe from "../assets/figma/emergency/ppe.svg";
+import emergencySettings from "../assets/figma/emergency/settings.svg";
+import people1 from "../assets/figma/people-1.svg";
+import people2 from "../assets/figma/people-2.svg";
+import people3 from "../assets/figma/people-3.svg";
+import ppe from "../assets/figma/ppe.svg";
+import ppeNav from "../assets/figma/ppe-nav.svg";
+import safetyNav from "../assets/figma/safety-nav.svg";
+import settings from "../assets/figma/settings.svg";
+import summaryAlarm from "../assets/figma/summary-alarm.svg";
+import summaryPpe from "../assets/figma/summary-ppe.svg";
+import summaryReport1 from "../assets/figma/summary-report-1.svg";
+import summaryReport2 from "../assets/figma/summary-report-2.svg";
+import summaryZoom from "../assets/figma/summary-zoom.svg";
+import timelineNav from "../assets/figma/timeline-nav.svg";
 
 export type FigmaIconName =
   | "area" | "arrow" | "cameraNav" | "cctvFooter" | "chatAi" | "connected"
@@ -41,6 +48,15 @@ const SIMPLE_ICONS: Partial<Record<FigmaIconName, string>> = {
   summaryPpe,
   summaryZoom,
   timelineNav,
+};
+
+const EMERGENCY_ICONS: Partial<Record<FigmaIconName, string>> = {
+  area: emergencyArea,
+  arrow: emergencyArrow,
+  chatAi: emergencyChatAi,
+  ppe: emergencyPpe,
+  settings: emergencySettings,
+  summaryPpe: emergencyPpe,
 };
 
 const ICON_INSETS: Partial<Record<FigmaIconName, string>> = {
@@ -68,35 +84,48 @@ interface Props {
   decorative?: boolean;
 }
 
-function IconGlyph({ source, inset = 0 }: { source: string; inset?: CSSProperties["inset"] }) {
-  const colorableSource = source.replace(/fill="#[0-9a-f]{6}"/gi, 'fill="currentColor"');
+interface AssetProps {
+  normal: string;
+  emergency?: string;
+  inset: string;
+}
+
+function IconAsset({ normal, emergency: emergencySource, inset }: AssetProps) {
   return (
-    <span
-      className="figma-icon__glyph"
-      style={{ inset }}
-      dangerouslySetInnerHTML={{ __html: colorableSource }}
-    />
+    <>
+      <img className="figma-icon__asset figma-icon__asset--normal" src={normal} alt="" style={{ inset }} />
+      {emergencySource && <img className="figma-icon__asset figma-icon__asset--emergency" src={emergencySource} alt="" style={{ inset }} />}
+    </>
   );
 }
 
 export function FigmaIcon({ name, size = 24, className = "", decorative = true }: Props) {
   const label = decorative ? undefined : name;
+  const accessibilityProps = { role: decorative ? undefined : "img", "aria-label": label, "aria-hidden": decorative || undefined };
+
   if (name === "people") {
     return (
-      <span className={`figma-icon ${className}`} style={{ width: size, height: size }} role={decorative ? undefined : "img"} aria-label={label} aria-hidden={decorative || undefined}>
-        <IconGlyph source={people1} inset="54.71% 4.17% 16.67% 69.46%" />
-        <IconGlyph source={people2} inset="16.67% 45.83% 50% 20.83%" />
-        <IconGlyph source={people3} inset="16.67% 20.83% 16.67% 4.17%" />
+      <span className={`figma-icon figma-icon--dual ${className}`} style={{ width: size, height: size }} {...accessibilityProps}>
+        <IconAsset normal={people1} emergency={emergencyPeople1} inset="54.71% 4.17% 16.67% 69.46%" />
+        <IconAsset normal={people2} emergency={emergencyPeople2} inset="16.67% 45.83% 50% 20.83%" />
+        <IconAsset normal={people3} emergency={emergencyPeople3} inset="16.67% 20.83% 16.67% 4.17%" />
       </span>
     );
   }
+
   if (name === "summaryReport") {
     return (
-      <span className={`figma-icon ${className}`} style={{ width: size, height: size }} role={decorative ? undefined : "img"} aria-label={label} aria-hidden={decorative || undefined}>
-        <IconGlyph source={summaryReport1} inset="40.63% 31.25% 21.88%" />
-        <IconGlyph source={summaryReport2} inset="6.25% 15.63%" />
+      <span className={`figma-icon ${className}`} style={{ width: size, height: size }} {...accessibilityProps}>
+        <img className="figma-icon__asset" src={summaryReport1} alt="" style={{ inset: "40.63% 31.25% 21.88%" }} />
+        <img className="figma-icon__asset" src={summaryReport2} alt="" style={{ inset: "6.25% 15.63%" }} />
       </span>
     );
   }
-  return <span className={`figma-icon ${className}`} style={{ width: size, height: size }} role={decorative ? undefined : "img"} aria-label={label} aria-hidden={decorative || undefined}><IconGlyph source={SIMPLE_ICONS[name]!} inset={ICON_INSETS[name] ?? 0} /></span>;
+
+  const emergencySource = EMERGENCY_ICONS[name];
+  return (
+    <span className={`figma-icon ${emergencySource ? "figma-icon--dual" : ""} ${className}`} style={{ width: size, height: size }} {...accessibilityProps}>
+      <IconAsset normal={SIMPLE_ICONS[name]!} emergency={emergencySource} inset={ICON_INSETS[name] ?? "0"} />
+    </span>
+  );
 }
