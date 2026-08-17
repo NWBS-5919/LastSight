@@ -1220,6 +1220,9 @@
   position: relative;
   display: grid;
   place-items: center;
+  width: 23px;
+  height: 23px;
+  flex: 0 0 23px;
 }
 
 .side-nav__count {
@@ -1921,16 +1924,22 @@
   line-height: 0;
 }
 
-.figma-icon__asset {
+.figma-icon__layer {
   position: absolute;
-  width: auto;
-  height: auto;
+  display: block;
+  line-height: 0;
+}
+
+.figma-icon__layer > img {
+  display: block;
+  width: 100%;
+  height: 100%;
   max-width: none;
 }
 
-.figma-icon__asset--emergency { display: none; }
-.app-shell--emergency .figma-icon--dual > .figma-icon__asset--normal { display: none; }
-.app-shell--emergency .figma-icon--dual > .figma-icon__asset--emergency { display: block; }
+.figma-icon__layer--emergency { display: none; }
+.app-shell--emergency .figma-icon--dual > .figma-icon__layer--normal { display: none; }
+.app-shell--emergency .figma-icon--dual > .figma-icon__layer--emergency { display: block; }
 
 .zone-guide {
   margin: 4px 0 0;
@@ -2783,8 +2792,8 @@
   .app-shell--normal .side-nav__item {
     width: 200px;
     min-height: 45px;
-    gap: 13px;
-    padding: 0 13px;
+    gap: 14px;
+    padding: 0 11px;
     border-radius: 5px;
     color: rgba(255,255,255,.88);
     font-size: 14px;
@@ -3230,8 +3239,8 @@
   .app-shell--emergency .side-nav__item {
     width: 200px;
     min-height: 45px;
-    gap: 13px;
-    padding: 0 13px;
+    gap: 14px;
+    padding: 0 11px;
     border-radius: 5px;
     color: rgba(255,255,255,.88);
     font-size: 14px;
@@ -3408,6 +3417,11 @@
 
   .app-shell--emergency .emergency-hero { margin-bottom: 18px; border-color: #f2caca; border-radius: 13px; background: rgba(255,255,255,.76); box-shadow: 2px 2px 5px #f5dada; }
   .app-shell--emergency .emergency-metrics { margin-bottom: 24px; }
+  .app-shell--emergency .emergency-metrics .stat-card__icon,
+  .app-shell--emergency .emergency-metrics .stat-card__icon svg {
+    color: #b78f8f;
+    stroke: #b78f8f;
+  }
   .app-shell--emergency .emergency-grid { grid-template-columns: repeat(5,minmax(0,1fr)); gap: 10px; }
   .app-shell--emergency .emergency-grid .worker-card { min-height: 112px; padding: 14px; border-color: #eddede; border-radius: 10px; box-shadow: none; }
   .app-shell--emergency .emergency-grid .worker-card__header { display: block; }

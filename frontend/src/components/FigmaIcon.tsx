@@ -93,8 +93,8 @@ interface AssetProps {
 function IconAsset({ normal, emergency: emergencySource, inset }: AssetProps) {
   return (
     <>
-      <img className="figma-icon__asset figma-icon__asset--normal" src={normal} alt="" style={{ inset }} />
-      {emergencySource && <img className="figma-icon__asset figma-icon__asset--emergency" src={emergencySource} alt="" style={{ inset }} />}
+      <span className="figma-icon__layer figma-icon__layer--normal" style={{ inset }}><img src={normal} alt="" /></span>
+      {emergencySource && <span className="figma-icon__layer figma-icon__layer--emergency" style={{ inset }}><img src={emergencySource} alt="" /></span>}
     </>
   );
 }
@@ -116,8 +116,8 @@ export function FigmaIcon({ name, size = 24, className = "", decorative = true }
   if (name === "summaryReport") {
     return (
       <span className={`figma-icon ${className}`} style={{ width: size, height: size }} {...accessibilityProps}>
-        <img className="figma-icon__asset" src={summaryReport1} alt="" style={{ inset: "40.63% 31.25% 21.88%" }} />
-        <img className="figma-icon__asset" src={summaryReport2} alt="" style={{ inset: "6.25% 15.63%" }} />
+        <span className="figma-icon__layer" style={{ inset: "40.63% 31.25% 21.88%" }}><img src={summaryReport1} alt="" /></span>
+        <span className="figma-icon__layer" style={{ inset: "6.25% 15.63%" }}><img src={summaryReport2} alt="" /></span>
       </span>
     );
   }
