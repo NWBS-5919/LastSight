@@ -1921,11 +1921,16 @@
   line-height: 0;
 }
 
-.figma-icon > img {
+.figma-icon__glyph {
   position: absolute;
-  width: auto;
-  height: auto;
-  max-width: none;
+  display: block;
+  background: currentColor;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
 }
 
 .zone-guide {
@@ -3322,8 +3327,9 @@
   .app-shell--emergency .stat-card--warning,
   .app-shell--emergency .stat-card--danger { background: rgba(255,255,255,.76); }
   .app-shell--emergency .stat-card__top { justify-content: flex-start; gap: 10px; }
-  .app-shell--emergency .stat-card__arrow { position: absolute; top: 16px; right: 16px; }
-  .app-shell--emergency .stat-card__icon { order: -1; width: 25px; height: 25px; border-radius: 0; color: #c69a9a; background: transparent; }
+  .app-shell--emergency .stat-card__arrow { position: absolute; top: 16px; right: 16px; color: #8fa1b7; }
+  .app-shell--emergency .stat-card__icon { order: -1; width: 25px; height: 25px; border-radius: 0; color: #8fa1b7; background: transparent; }
+  .app-shell--emergency .stat-card:last-child .stat-card__icon { color: #b78f8f; }
   .app-shell--emergency .stat-card__icon svg { width: 25px; height: 25px; stroke-width: 3; }
   .app-shell--emergency .stat-card__label { color: #b78f8f; font-size: 16px; font-weight: 650; }
   .app-shell--emergency .stat-card__value { position: absolute; right: 20px; bottom: 17px; margin: 0; color: #13252e; font-size: 36px; font-weight: 700; }

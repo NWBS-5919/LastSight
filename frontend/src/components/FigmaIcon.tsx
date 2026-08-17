@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import area from "../assets/figma/area.svg";
 import arrow from "../assets/figma/arrow.svg";
 import cameraNav from "../assets/figma/camera-nav.svg";
@@ -67,24 +68,37 @@ interface Props {
   decorative?: boolean;
 }
 
+function IconGlyph({ src, inset = 0 }: { src: string; inset?: CSSProperties["inset"] }) {
+  return (
+    <span
+      className="figma-icon__glyph"
+      style={{
+        inset,
+        WebkitMaskImage: `url(${src})`,
+        maskImage: `url(${src})`,
+      }}
+    />
+  );
+}
+
 export function FigmaIcon({ name, size = 24, className = "", decorative = true }: Props) {
   const label = decorative ? undefined : name;
   if (name === "people") {
     return (
       <span className={`figma-icon ${className}`} style={{ width: size, height: size }} role={decorative ? undefined : "img"} aria-label={label} aria-hidden={decorative || undefined}>
-        <img src={people1} alt="" style={{ inset: "54.71% 4.17% 16.67% 69.46%" }} />
-        <img src={people2} alt="" style={{ inset: "16.67% 45.83% 50% 20.83%" }} />
-        <img src={people3} alt="" style={{ inset: "16.67% 20.83% 16.67% 4.17%" }} />
+        <IconGlyph src={people1} inset="54.71% 4.17% 16.67% 69.46%" />
+        <IconGlyph src={people2} inset="16.67% 45.83% 50% 20.83%" />
+        <IconGlyph src={people3} inset="16.67% 20.83% 16.67% 4.17%" />
       </span>
     );
   }
   if (name === "summaryReport") {
     return (
       <span className={`figma-icon ${className}`} style={{ width: size, height: size }} role={decorative ? undefined : "img"} aria-label={label} aria-hidden={decorative || undefined}>
-        <img src={summaryReport1} alt="" style={{ inset: "40.63% 31.25% 21.88%" }} />
-        <img src={summaryReport2} alt="" style={{ inset: "6.25% 15.63%" }} />
+        <IconGlyph src={summaryReport1} inset="40.63% 31.25% 21.88%" />
+        <IconGlyph src={summaryReport2} inset="6.25% 15.63%" />
       </span>
     );
   }
-  return <span className={`figma-icon ${className}`} style={{ width: size, height: size }} role={decorative ? undefined : "img"} aria-label={label} aria-hidden={decorative || undefined}><img src={SIMPLE_ICONS[name]} alt="" style={{ inset: ICON_INSETS[name] ?? 0 }} /></span>;
+  return <span className={`figma-icon ${className}`} style={{ width: size, height: size }} role={decorative ? undefined : "img"} aria-label={label} aria-hidden={decorative || undefined}><IconGlyph src={SIMPLE_ICONS[name]!} inset={ICON_INSETS[name] ?? 0} /></span>;
 }
