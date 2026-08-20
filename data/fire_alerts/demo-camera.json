@@ -54,5 +54,40 @@
     "triggered_at": "2026-07-31T11:09:56.709574+00:00",
     "source": "auto_detection",
     "confidence": 0.9289788007736206
+  },
+  {
+    "camera_id": "demo-camera",
+    "zone_id": null,
+    "triggered_at": "2026-08-06T11:46:47.074375+00:00",
+    "source": "auto_detection",
+    "confidence": 0.5736784338951111
+  },
+  {
+    "camera_id": "demo-camera",
+    "zone_id": null,
+    "triggered_at": "2026-08-06T11:56:26.866681+00:00",
+    "source": "auto_detection",
+    "confidence": 0.5736784338951111
+  },
+  {
+    "camera_id": "demo-camera",
+    "zone_id": null,
+    "triggered_at": "2026-08-07T08:11:40.807749+00:00",
+    "source": "auto_detection",
+    "confidence": 0.5736784338951111
+  },
+  {
+    "camera_id": "demo-camera",
+    "zone_id": null,
+    "triggered_at": "2026-08-18T13:19:06.900543+00:00",
+    "source": "auto_detection",
+    "confidence": 0.5736784338951111
+  },
+  {
+    "camera_id": "demo-camera",
+    "zone_id": null,
+    "triggered_at": "2026-08-18T13:41:12.698314+00:00",
+    "source": "auto_detection",
+    "confidence": 0.5736784338951111
   }
 ]
